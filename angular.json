@@ -76,6 +76,13 @@
               "extractLicenses": false,
               "sourceMap": true
             },
+            "staging": {
+              "ngxEnv": {
+                "prefix": "NG_APP_",
+                "runtime": false,
+                "files": [".env.staging", ".env"]
+              }
+            },
             "ci": {
               "progress": false
             }

@@ -69,6 +69,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Backups de bases de datos
+*.sql
+
 # Environment variables (credenciales locales)
 .env
 .env.local

@@ -9,6 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const environment = {
   production: import.meta.env.NG_APP_ENV === 'production',
+  staging: import.meta.env.NG_APP_ENV === 'staging',
   supabaseUrl,
   supabaseAnonKey,
 };

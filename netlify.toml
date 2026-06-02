@@ -1,8 +1,31 @@
+# ============================================================
+# Configuración general
+# ============================================================
 [build]
-  command = "npm run build:netlify"
   publish = "www"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# ============================================================
+# Producción (rama main)
+# ============================================================
+[context.production]
+  command = "npm run build:production"
+
+# ============================================================
+# Staging (rama staging)
+# ============================================================
+[context.staging]
+  command = "npm run build:staging"
+
+# ============================================================
+# Deploy previews (rama develop o cualquier otra)
+# ============================================================
+[context.deploy-preview]
+  command = "npm run build:staging"
+
+[context.branch-deploy]
+  command = "npm run build:staging"
