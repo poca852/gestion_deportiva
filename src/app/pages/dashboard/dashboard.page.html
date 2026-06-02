@@ -1,0 +1,83 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Dashboard</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="dashboard-header">
+    <h2>Hola, {{ authService.currentProfile?.nombre | titlecase }}</h2>
+    <p>{{ subtitulo }}</p>
+  </div>
+
+  @if (loading) {
+    <div class="loading-center">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else if (stats.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon-wrapper">
+        <ion-icon name="analytics-outline" class="empty-icon"></ion-icon>
+      </div>
+      <h3 class="empty-title">Sin datos disponibles</h3>
+      <p class="empty-subtitle">Aún no hay información para mostrar en el Dashboard.</p>
+    </div>
+  } @else {
+    <div class="stats-grid">
+      @for (stat of stats; track stat.title) {
+        <div class="stat-card" [style.--stat-color]="'var(--ion-color-' + stat.color + ')'">
+          <div class="stat-card-header">
+            <div class="stat-icon-wrapper" [style.background]="'rgba(var(--ion-color-' + stat.color + '-rgb), 0.1)'">
+              <ion-icon [name]="stat.icon" class="stat-icon" [style.color]="'var(--ion-color-' + stat.color + ')'"></ion-icon>
+            </div>
+            <span class="stat-value">{{ stat.value }}</span>
+          </div>
+          <div class="stat-card-content">
+            <span class="stat-title">{{ stat.title }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (categoriasResumen.length > 0) {
+      <div class="section-divider">
+        <h3 class="section-title">Alumnos por categoría</h3>
+      </div>
+      <div class="categorias-grid">
+        @for (item of categoriasResumen; track item.categoria) {
+          <div class="categoria-card">
+            <strong class="categoria-value">{{ item.total }}</strong>
+            <span class="categoria-name">{{ item.categoria }}</span>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  @if (quickActions.length > 0) {
+    <div class="section-divider">
+      <h3 class="section-title">Accesos rápidos</h3>
+    </div>
+    <div class="quick-actions-grid">
+      @for (action of quickActions; track action.title) {
+        <a [routerLink]="action.url" class="quick-action-card" [style.--qa-color]="'var(--ion-color-' + action.color + ')'">
+          <div class="qa-icon-wrapper" [style.background]="'rgba(var(--ion-color-' + action.color + '-rgb), 0.1)'">
+            <ion-icon [name]="action.icon" class="qa-icon" [style.color]="'var(--ion-color-' + action.color + ')'"></ion-icon>
+          </div>
+          <div class="qa-text">
+            <span class="qa-title">{{ action.title }}</span>
+            <span class="qa-subtitle">{{ action.subtitle }}</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="qa-chevron"></ion-icon>
+        </a>
+      }
+    </div>
+  }
+</ion-content>

@@ -1,0 +1,128 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Academia</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading) {
+    <div class="loading-center">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else {
+    <!-- LOGO -->
+    <div class="form-section">
+      <div class="section-header">
+        <ion-icon name="image-outline" class="section-icon"></ion-icon>
+        <span>Logo de la academia</span>
+      </div>
+
+      <div class="preview-container" [class.is-uploading]="uploadingLogo">
+        @if (logoPreview || loadingLogo) {
+          <app-lazy-image
+            [src]="logoPreview"
+            [loading]="loadingLogo"
+            alt="Logo de la academia"
+            objectFit="contain"
+            [lightBackground]="true"
+            class="preview-image"
+          />
+        } @else {
+          <div class="preview-empty">
+            <ion-icon name="image-outline"></ion-icon>
+            <span>No hay logo configurado</span>
+          </div>
+        }
+        @if (uploadingLogo) {
+          <div class="upload-overlay">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>Subiendo logo...</span>
+          </div>
+        }
+      </div>
+
+      <label class="upload-btn" [class.disabled]="uploadingLogo">
+        <input type="file" accept="image/*" [disabled]="uploadingLogo" (change)="onLogoSelected($event)" />
+        <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+        {{ uploadingLogo ? 'Subiendo...' : 'Reemplazar logo' }}
+      </label>
+      <p class="field-hint">La imagen anterior se reemplaza automáticamente.</p>
+    </div>
+
+    <!-- SELLO -->
+    <div class="form-section">
+      <div class="section-header">
+        <ion-icon name="ribbon-outline" class="section-icon"></ion-icon>
+        <span>Sello del equipo</span>
+      </div>
+
+      <div class="preview-container" [class.is-uploading]="uploadingSello">
+        @if (selloPreview || loadingSello) {
+          <app-lazy-image
+            [src]="selloPreview"
+            [loading]="loadingSello"
+            alt="Sello del equipo"
+            objectFit="contain"
+            [lightBackground]="true"
+            class="preview-image"
+          />
+        } @else {
+          <div class="preview-empty">
+            <ion-icon name="ribbon-outline"></ion-icon>
+            <span>No hay sello configurado</span>
+          </div>
+        }
+        @if (uploadingSello) {
+          <div class="upload-overlay">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>Subiendo sello...</span>
+          </div>
+        }
+      </div>
+
+      <label class="upload-btn" [class.disabled]="uploadingSello">
+        <input type="file" accept="image/png" [disabled]="uploadingSello" (change)="onSelloSelected($event)" />
+        <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+        {{ uploadingSello ? 'Subiendo...' : 'Reemplazar sello (PNG)' }}
+      </label>
+      <p class="field-hint">Aparecerá en los reportes imprimibles.</p>
+    </div>
+
+    <!-- DATOS DE LA ACADEMIA -->
+    <div class="form-section">
+      <div class="section-header">
+        <ion-icon name="business-outline" class="section-icon"></ion-icon>
+        <span>Datos de la academia</span>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <ion-item>
+          <ion-label position="stacked">Nombre de la academia *</ion-label>
+          <ion-input formControlName="nombre" placeholder="Nombre de la academia"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Dirección *</ion-label>
+          <ion-input formControlName="direccion" placeholder="Dirección de la academia"></ion-input>
+        </ion-item>
+
+        <ion-button
+          expand="block"
+          type="submit"
+          [disabled]="saving || uploadingLogo || uploadingSello"
+          class="submit-btn"
+        >
+          @if (saving) {
+            <ion-spinner name="crescent"></ion-spinner>
+          } @else {
+            <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+            Guardar cambios
+          }
+        </ion-button>
+      </form>
+    </div>
+  }
+</ion-content>

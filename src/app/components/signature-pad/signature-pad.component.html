@@ -1,0 +1,14 @@
+<div class="signature-pad">
+  <canvas
+    #canvas
+    class="signature-canvas"
+    (pointerdown)="startDraw($event)"
+    (pointermove)="draw($event)"
+    (pointerup)="endDraw()"
+    (pointerleave)="endDraw()"
+    (pointercancel)="endDraw()"
+  ></canvas>
+  <ion-button fill="clear" size="small" type="button" (click)="clear()">
+    Limpiar firma
+  </ion-button>
+</div>

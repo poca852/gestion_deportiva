@@ -1,0 +1,276 @@
+// ---------------------------------------------------------------------------
+// Hero section
+// ---------------------------------------------------------------------------
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  text-align: center;
+
+  h1 {
+    margin: 0 0 12px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+  }
+}
+
+.hero-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.categoria-badge {
+  display: inline-block;
+  margin: 0;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-primary) 0%,
+    var(--ion-color-primary-shade) 100%
+  );
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(var(--ion-color-primary-rgb), 0.45);
+}
+
+.talla-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ion-color-secondary);
+  background: rgba(var(--ion-color-secondary-rgb), 0.1);
+  border-radius: 999px;
+}
+
+.nivel-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.nivel-text {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+// ---------------------------------------------------------------------------
+// Foto
+// ---------------------------------------------------------------------------
+.foto-estudiante {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--ion-color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+
+  app-lazy-image {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.foto-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    145deg,
+    var(--ion-color-primary) 0%,
+    var(--ion-color-primary-tint) 100%
+  );
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+// ---------------------------------------------------------------------------
+// Detail cards
+// ---------------------------------------------------------------------------
+.detail-card {
+  margin-bottom: 16px;
+  border-radius: var(--app-radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  ion-card-header {
+    padding-bottom: 8px;
+  }
+
+  ion-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-icon {
+      font-size: 1.2rem;
+      color: var(--ion-color-primary);
+    }
+  }
+
+  ion-card-subtitle {
+    font-size: 0.8rem;
+  }
+
+  ion-card-content {
+    padding-top: 8px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Datos grid
+// ---------------------------------------------------------------------------
+.datos-grid {
+  display: grid;
+  gap: 16px;
+
+  @media (min-width: 480px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dato-item {
+  &.full-width {
+    @media (min-width: 480px) {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.dato-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ion-color-medium);
+  margin-bottom: 4px;
+}
+
+.dato-valor {
+  font-size: 1rem;
+  font-weight: 500;
+  display: block;
+}
+
+.telefono-valor {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin-bottom: 12px;
+}
+
+.llamar-tutor-btn {
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+// ---------------------------------------------------------------------------
+// Documentos
+// ---------------------------------------------------------------------------
+.documento-pdf {
+  width: 100%;
+  min-height: 420px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+  background: var(--ion-color-light);
+}
+
+.documento-imagen {
+  width: 100%;
+  max-height: 480px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ion-color-light);
+
+  app-lazy-image {
+    width: 100%;
+    min-height: 240px;
+    max-height: 480px;
+  }
+}
+
+.download-btn {
+  margin-top: 16px;
+}
+
+// ---------------------------------------------------------------------------
+// Empty document state
+// ---------------------------------------------------------------------------
+.empty-document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+
+  .empty-doc-icon {
+    font-size: 2rem;
+    color: var(--ion-color-medium-tint);
+  }
+
+  ion-note {
+    font-size: 0.9rem;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Loading
+// ---------------------------------------------------------------------------
+.loading-inline {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+// ---------------------------------------------------------------------------
+// Convocatorias
+// ---------------------------------------------------------------------------
+.convocatorias-card-content {
+  padding-inline: 0;
+}
+
+.convocatorias-list {
+  margin: 0;
+
+  .convocatoria-item {
+    --padding-start: 16px;
+    --inner-padding-end: 16px;
+  }
+
+  h3 {
+    font-weight: 600;
+  }
+}
+
+.convocatoria-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(var(--ion-color-secondary-rgb), 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon {
+    font-size: 1.2rem;
+  }
+}

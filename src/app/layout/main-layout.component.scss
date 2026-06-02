@@ -1,0 +1,122 @@
+:host {
+  ion-menu {
+    --width: min(300px, 88vw);
+  }
+
+  ion-menu ion-header {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+    z-index: 2;
+    position: relative;
+  }
+
+  ion-menu ion-header ion-toolbar {
+    --border-width: 0;
+  }
+
+  ion-menu ion-content {
+    --background: var(--app-surface);
+  }
+
+  ion-menu ion-content::part(scroll) {
+    border-top: 1px solid var(--app-border-color);
+  }
+
+  ion-menu ion-list {
+    padding: 12px 8px 24px;
+    background: transparent;
+  }
+
+  ion-menu ion-item {
+    --background: transparent;
+    --background-hover: var(--app-surface-elevated);
+    --background-focused: var(--app-surface-elevated);
+    --background-activated: var(--app-surface-elevated);
+    --min-height: 48px;
+    --border-radius: var(--app-radius-sm);
+    margin-bottom: 4px;
+    border-radius: var(--app-radius-sm);
+
+    ion-icon {
+      color: var(--ion-color-primary);
+      font-size: 1.25rem;
+    }
+  }
+
+  ion-menu ion-item.selected {
+    --background: rgba(var(--ion-color-primary-rgb), 0.14);
+    --color: var(--ion-color-primary);
+    font-weight: 600;
+
+    ion-icon {
+      color: var(--ion-color-primary);
+    }
+  }
+}
+
+.brand-title {
+  padding-inline: 8px;
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.brand-fallback-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  color: var(--app-brand-accent-light);
+}
+
+.brand-name {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.user-info {
+  padding: 20px 16px 16px;
+  margin: 0;
+  background: var(--app-surface-elevated);
+  border-bottom: 1px solid var(--app-border-color);
+
+  .user-name {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--ion-text-color);
+  }
+
+  .user-role {
+    margin: 6px 0 0;
+    font-size: 0.8125rem;
+    color: var(--ion-color-medium);
+    line-height: 1.4;
+  }
+}
+
+.logout-item {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--app-border-color);
+  --color: var(--ion-color-danger);
+
+  ion-icon {
+    color: var(--ion-color-danger);
+  }
+}

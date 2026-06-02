@@ -1,0 +1,142 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Alumnos</ion-title>
+    <ion-buttons slot="end">
+      <ion-button routerLink="/app/alumnos/listado-print" aria-label="Generar reporte">
+        <ion-icon name="document-text-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar class="toolbar-filters">
+    <ion-searchbar
+      placeholder="Buscar por nombre o tutor..."
+      (ionInput)="onSearch($event)"
+      debounce="300"
+    ></ion-searchbar>
+    @if (authService.isAdmin() || authService.categoriasAsignadas().length > 1) {
+      <ion-item lines="none">
+        <ion-select
+          placeholder="Filtrar categoría"
+          interface="popover"
+          (ionChange)="onCategoriaChange($event)"
+          [value]="categoriaFiltro"
+        >
+          <ion-select-option value="">Todas</ion-select-option>
+          @for (cat of categoriasFiltroOpciones(); track cat) {
+            <ion-select-option [value]="cat">{{ cat }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="has-fab">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  @if (!loading && alumnos.length > 0) {
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-value">{{ alumnos.length }}</span>
+        <span class="stat-label">mostrando</span>
+      </div>
+      @if (totalCount > alumnos.length) {
+        <div class="stat-item">
+          <span class="stat-value">{{ totalCount }}</span>
+          <span class="stat-label">total</span>
+        </div>
+      }
+    </div>
+  }
+
+  @if (loading && alumnos.length === 0) {
+    <div class="loading-center">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else if (alumnos.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon-wrapper">
+        <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+      </div>
+      <h3 class="empty-title">No hay alumnos registrados</h3>
+      <p class="empty-subtitle">
+        {{ searchTerm || categoriaFiltro ? 'No se encontraron alumnos con los filtros actuales.' : 'Comienza registrando el primer alumno de la academia.' }}
+      </p>
+      @if (!searchTerm && !categoriaFiltro) {
+        <ion-button routerLink="/app/alumnos/nuevo" class="empty-btn">
+          <ion-icon name="add-outline" slot="start"></ion-icon>
+          Registrar alumno
+        </ion-button>
+      }
+    </div>
+  } @else {
+    <ion-list class="page-list modern-list" lines="none">
+      @for (a of alumnos; track a.id) {
+        <ion-item-sliding>
+          <ion-item button [routerLink]="['/app/alumnos/detalle', a.id]" class="alumno-item">
+            <ion-avatar slot="start" class="alumno-avatar">
+              <app-lazy-image
+                [src]="getFotoUrl(a.id)"
+                [loading]="hasFoto(a) && (isFotoResolving(a.id) || !getFotoUrl(a.id))"
+                alt="Foto de {{ a.nombres }}"
+                (imgErrorEvent)="retryFoto(a.id)"
+                [hasCustomFallback]="true"
+              >
+                <div class="avatar-placeholder">{{ a.nombres.charAt(0) }}{{ a.apellidos.charAt(0) }}</div>
+              </app-lazy-image>
+            </ion-avatar>
+            <ion-label>
+              <h2>{{ a.nombres | titlecase }} {{ a.apellidos | titlecase }}</h2>
+              <p class="tutor-info">
+                <span class="tutor-label">Tutor:</span> {{ a.nombre_tutor | titlecase }}
+              </p>
+              <div class="alumno-meta">
+                <ion-chip color="primary" class="cat-chip">{{ a.categoria }}</ion-chip>
+                @if (a.talla_camiseta) {
+                  <span class="talla-badge">{{ a.talla_camiseta }}</span>
+                }
+                <span class="telefono-chip">{{ a.telefono_tutor }}</span>
+              </div>
+            </ion-label>
+          </ion-item>
+
+          <ion-item-options side="end">
+            <ion-item-option
+              color="primary"
+              [routerLink]="['/app/alumnos/editar', a.id]"
+              aria-label="Editar alumno"
+            >
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-item-option>
+            <ion-item-option
+              color="danger"
+              (click)="confirmDelete(a)"
+              aria-label="Eliminar alumno"
+            >
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      }
+    </ion-list>
+    @if (!allLoaded) {
+      <ion-infinite-scroll threshold="100px" (ionInfinite)="loadMore($event)">
+        <ion-infinite-scroll-content
+          loadingSpinner="crescent"
+          loadingText="Cargando más alumnos..."
+        ></ion-infinite-scroll-content>
+      </ion-infinite-scroll>
+    }
+  }
+
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button routerLink="/app/alumnos/nuevo" aria-label="Registrar alumno">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

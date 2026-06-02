@@ -1,0 +1,489 @@
+// ---------------------------------------------------------------------------
+// Config section
+// ---------------------------------------------------------------------------
+.config-section {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .config-header {
+    h2 {
+      margin: 0 0 4px;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--ion-color-medium);
+    }
+  }
+}
+
+.input-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--app-surface-elevated);
+  border-radius: var(--app-radius-md);
+  padding: 14px 16px;
+  border: 1px solid var(--app-border-color);
+}
+
+.input-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--ion-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon {
+    font-size: 20px;
+    color: #fff;
+  }
+}
+
+.input-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.input-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ion-color-medium);
+}
+
+.modern-input {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+  --background: transparent;
+  font-size: 1rem;
+  --placeholder-color: var(--ion-color-medium-tint);
+  --placeholder-opacity: 0.7;
+}
+
+.input-hint {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+// Columnas checkboxes
+.columna-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(var(--ion-color-primary-rgb), 0.06);
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(var(--ion-color-primary-rgb), 0.12);
+  }
+
+  input[type='checkbox'] {
+    accent-color: var(--ion-color-primary);
+    width: 16px;
+    height: 16px;
+    margin: 0;
+  }
+
+  .checkbox-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ion-color-step-700);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Action buttons
+// ---------------------------------------------------------------------------
+.action-btn {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  min-height: 50px;
+  --border-radius: 12px;
+  text-transform: none;
+}
+
+.primary-btn {
+  --background: var(--ion-color-primary);
+  --background-hover: var(--ion-color-primary-shade);
+  --color: #fff;
+  --box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.export-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 24px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.export-secondary {
+  display: flex;
+  gap: 12px;
+
+  ion-button {
+    flex: 1;
+  }
+}
+
+.pdf-btn {
+  --background: #e74c3c;
+  --color: #fff;
+  --box-shadow: 0 4px 14px rgba(231, 76, 60, 0.3);
+}
+
+.image-btn {
+  --background: #2ecc71;
+  --color: #fff;
+  --box-shadow: 0 4px 14px rgba(46, 204, 113, 0.3);
+}
+
+.print-btn {
+  --background: #3498db;
+  --color: #fff;
+  --box-shadow: 0 4px 14px rgba(52, 152, 219, 0.3);
+}
+
+// ---------------------------------------------------------------------------
+// Loading / empty
+// ---------------------------------------------------------------------------
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 16px;
+
+  .empty-icon {
+    font-size: 3rem;
+    color: var(--ion-color-medium);
+    margin-bottom: 12px;
+  }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--ion-color-medium);
+    font-size: 0.9rem;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Print document
+// ---------------------------------------------------------------------------
+.print-document {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  background: #fff;
+  color: #000;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.doc-header {
+  border-bottom: 3px solid var(--ion-color-primary);
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.club-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.club-logo-wrapper {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+
+  .club-logo {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.club-text {
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--ion-color-primary);
+  }
+
+  .club-subtitle {
+    margin: 2px 0 0;
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .club-address {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: #888;
+  }
+}
+
+.doc-title-section {
+  text-align: left;
+  margin-top: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.doc-meta-bar {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #666;
+
+  .meta-divider {
+    margin: 0 8px;
+    color: #ccc;
+  }
+
+  .meta-item strong {
+    color: var(--ion-color-primary);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Table
+// ---------------------------------------------------------------------------
+.doc-players table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.doc-players th,
+.doc-players td {
+  border: 1px solid #ddd;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.doc-players th {
+  background: #f5f5f5;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #444;
+}
+
+.doc-players tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.doc-players tbody tr:hover {
+  background: #f0f7ff;
+}
+
+.col-num {
+  width: 40px;
+  text-align: center;
+}
+
+.col-cat,
+.col-talla,
+.col-genero {
+  text-align: center;
+}
+
+.col-tel,
+.col-fecha {
+  text-align: left;
+}
+
+.nombre-celda {
+  font-weight: 500;
+}
+
+.talla-celda {
+  font-weight: 600;
+  text-align: center;
+}
+
+// ---------------------------------------------------------------------------
+// Footer
+// ---------------------------------------------------------------------------
+.doc-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 48px;
+  padding-top: 24px;
+}
+
+.footer-signature,
+.footer-sello {
+  width: 40%;
+  min-width: 140px;
+  text-align: center;
+
+  .signature-line {
+    border-top: 1px solid #000;
+    margin-bottom: 8px;
+    min-height: 64px;
+  }
+
+  .firma-img,
+  .sello-img {
+    display: block;
+    max-width: 100%;
+    max-height: 80px;
+    margin: 0 auto 8px;
+    object-fit: contain;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #666;
+  }
+}
+
+.sello-img {
+  display: block;
+  max-width: 100%;
+  max-height: 80px;
+  margin: 0 auto 8px;
+  object-fit: contain;
+}
+
+.firma-img {
+  display: block;
+  max-width: 100%;
+  max-height: 80px;
+  margin: 0 auto 8px;
+  object-fit: contain;
+}
+
+// Signature section
+.signature-section {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+  border-top: 1px solid var(--ion-color-light-shade);
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .signature-hint {
+    margin: 0 0 12px;
+    font-size: 0.875rem;
+    color: var(--ion-color-medium);
+  }
+
+  .save-signature-btn {
+    margin-top: 12px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Responsive
+// ---------------------------------------------------------------------------
+@media (max-width: 576px) {
+  .print-document {
+    padding: 20px 16px;
+  }
+
+  .doc-players {
+    overflow-x: auto;
+
+    table {
+      min-width: 500px;
+    }
+  }
+
+  .doc-footer {
+    flex-direction: column;
+    gap: 32px;
+    align-items: stretch;
+  }
+
+  .footer-signature,
+  .footer-sello {
+    width: 100%;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Print
+// ---------------------------------------------------------------------------
+@media print {
+  .no-print,
+  ion-menu,
+  ion-split-pane,
+  ion-tab-bar,
+  ion-fab,
+  .ion-page > ion-header {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  ion-content {
+    --background: #fff;
+  }
+
+  ion-content::part(scroll) {
+    overflow: visible !important;
+  }
+
+  .print-document {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .club-logo,
+  .sello-img,
+  .firma-img {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  @page {
+    margin: 1.5cm;
+    size: A4 portrait;
+  }
+}

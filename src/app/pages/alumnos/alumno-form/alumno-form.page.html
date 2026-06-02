@@ -1,0 +1,252 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/app/alumnos"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ alumnoId ? 'Editar' : 'Registrar' }} alumno</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loadingAlumno) {
+    <div class="loading-center">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <!-- DATOS PERSONALES -->
+      <div class="form-section">
+        <div class="section-header">
+          <ion-icon name="person-outline" class="section-icon"></ion-icon>
+          <span>Datos personales</span>
+        </div>
+
+        <ion-item>
+          <ion-label position="stacked">Nombres *</ion-label>
+          <ion-input formControlName="nombres" placeholder="Nombres del alumno"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Apellidos *</ion-label>
+          <ion-input formControlName="apellidos" placeholder="Apellidos del alumno"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Fecha de nacimiento *</ion-label>
+          <ion-input type="date" formControlName="fecha_nacimiento"></ion-input>
+        </ion-item>
+
+        @if (categoriaRecomendada) {
+          <ion-note class="categoria-note">
+            <ion-icon name="bulb-outline" class="note-icon"></ion-icon>
+            Categoría recomendada: <strong>{{ categoriaRecomendada }}</strong>
+            <ion-button fill="clear" size="small" (click)="aplicarCategoriaRecomendada()">
+              Aplicar
+            </ion-button>
+          </ion-note>
+        }
+
+        <ion-item>
+          <ion-label position="stacked">Género *</ion-label>
+          <ion-select formControlName="genero" interface="popover">
+            <ion-select-option value="masculino">Masculino</ion-select-option>
+            <ion-select-option value="femenino">Femenino</ion-select-option>
+            <ion-select-option value="otro">Otro</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Categoría *</ion-label>
+          <ion-select formControlName="categoria" interface="popover">
+            @for (cat of categorias; track cat) {
+              <ion-select-option [value]="cat">{{ cat }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Nivel</ion-label>
+          <ion-select formControlName="nivel" interface="popover">
+            <ion-select-option value="">Sin nivel</ion-select-option>
+            <ion-select-option value="basico">Básico</ion-select-option>
+            <ion-select-option value="intermedio">Intermedio</ion-select-option>
+            <ion-select-option value="avanzado">Avanzado</ion-select-option>
+          </ion-select>
+          @if (form.controls.nivel.value) {
+            <div slot="end" class="nivel-indicator" [style.background]="nivelColor(form.controls.nivel.value!)"></div>
+          }
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Talla de camiseta</ion-label>
+          <ion-select formControlName="talla_camiseta" interface="popover">
+            <ion-select-option value="">Sin asignar</ion-select-option>
+            @for (talla of tallasCamiseta; track talla) {
+              <ion-select-option [value]="talla">{{ talla }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Fecha de ingreso</ion-label>
+          <ion-input type="date" formControlName="fecha_ingreso"></ion-input>
+        </ion-item>
+      </div>
+
+      <!-- TUTOR -->
+      <div class="form-section">
+        <div class="section-header">
+          <ion-icon name="people-outline" class="section-icon"></ion-icon>
+          <span>Datos del tutor</span>
+        </div>
+
+        <ion-item>
+          <ion-label position="stacked">Nombre del tutor *</ion-label>
+          <ion-input formControlName="nombre_tutor" placeholder="Nombre completo del tutor"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Teléfono del tutor *</ion-label>
+          <ion-input type="tel" formControlName="telefono_tutor" placeholder="Ej: 0991234567"></ion-input>
+        </ion-item>
+      </div>
+
+      <!-- DOCUMENTOS -->
+      <div class="form-section">
+        <div class="section-header">
+          <ion-icon name="document-outline" class="section-icon"></ion-icon>
+          <span>Documentos</span>
+        </div>
+
+        <!-- Foto del estudiante -->
+        <div class="file-section">
+          <label class="file-label">
+            <ion-icon name="camera-outline"></ion-icon>
+            Foto del estudiante
+          </label>
+          <div class="file-upload-area">
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onFileSelected($event, 'estudiante')"
+              class="file-input"
+              id="file-estudiante"
+            />
+            <label for="file-estudiante" class="file-dropzone">
+              <ion-icon name="cloud-upload-outline" class="upload-icon"></ion-icon>
+              <span>Seleccionar foto</span>
+            </label>
+          </div>
+          @if (fotoEstudiantePreview || loadingFotoEstudiante) {
+            <div class="preview-frame">
+              <app-lazy-image
+                [src]="fotoEstudiantePreview"
+                [loading]="loadingFotoEstudiante"
+                alt="Vista previa del estudiante"
+                objectFit="cover"
+              />
+            </div>
+          }
+        </div>
+
+        <!-- Partida de nacimiento -->
+        <div class="file-section">
+          <label class="file-label">
+            <ion-icon name="document-outline"></ion-icon>
+            Partida de nacimiento
+          </label>
+          <div class="file-upload-area">
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              (change)="onFileSelected($event, 'documento')"
+              class="file-input"
+              id="file-documento"
+            />
+            <label for="file-documento" class="file-dropzone">
+              <ion-icon name="cloud-upload-outline" class="upload-icon"></ion-icon>
+              <span>Seleccionar archivo</span>
+            </label>
+          </div>
+          @if (documentoEsPdf && (fotoDocumentoFile || form.controls.foto_documento_url.value)) {
+            <div class="pdf-info">
+              <div class="pdf-badge">
+                <ion-icon name="document-text-outline"></ion-icon>
+                Documento PDF
+              </div>
+              @if (fotoDocumentoPreview && !fotoDocumentoFile) {
+                <a [href]="fotoDocumentoPreview" target="_blank" class="pdf-action-link">
+                  <ion-icon name="open-outline"></ion-icon>
+                  Ver archivo
+                </a>
+              }
+            </div>
+          } @else if (fotoDocumentoPreview || loadingFotoDocumento) {
+            <div class="preview-frame">
+              <app-lazy-image
+                [src]="fotoDocumentoPreview"
+                [loading]="loadingFotoDocumento"
+                alt="Vista previa del documento"
+                objectFit="contain"
+              />
+            </div>
+          }
+        </div>
+
+        <!-- Documento del padre -->
+        <div class="file-section">
+          <label class="file-label">
+            <ion-icon name="document-outline"></ion-icon>
+            Documento del padre de familia
+            <span class="opcional">(opcional)</span>
+          </label>
+          <div class="file-upload-area">
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              (change)="onFileSelected($event, 'padre')"
+              class="file-input"
+              id="file-padre"
+            />
+            <label for="file-padre" class="file-dropzone">
+              <ion-icon name="cloud-upload-outline" class="upload-icon"></ion-icon>
+              <span>Seleccionar archivo</span>
+            </label>
+          </div>
+          @if (documentoPadreEsPdf && (fotoDocumentoPadreFile || form.controls.foto_documento_padre_url.value)) {
+            <div class="pdf-info">
+              <div class="pdf-badge">
+                <ion-icon name="document-text-outline"></ion-icon>
+                Documento PDF
+              </div>
+              @if (fotoDocumentoPadrePreview && !fotoDocumentoPadreFile) {
+                <a [href]="fotoDocumentoPadrePreview" target="_blank" class="pdf-action-link">
+                  <ion-icon name="open-outline"></ion-icon>
+                  Ver archivo
+                </a>
+              }
+            </div>
+          } @else if (fotoDocumentoPadrePreview || loadingFotoDocumentoPadre) {
+            <div class="preview-frame">
+              <app-lazy-image
+                [src]="fotoDocumentoPadrePreview"
+                [loading]="loadingFotoDocumentoPadre"
+                alt="Vista previa del documento del padre"
+                objectFit="contain"
+              />
+            </div>
+          }
+        </div>
+      </div>
+
+      <ion-button expand="block" type="submit" [disabled]="saving" class="submit-btn">
+        @if (saving) {
+          <ion-spinner name="crescent"></ion-spinner>
+        } @else {
+          <ion-icon [name]="alumnoId ? 'checkmark-outline' : 'person-add-outline'" slot="start"></ion-icon>
+          {{ alumnoId ? 'Actualizar' : 'Registrar' }} alumno
+        }
+      </ion-button>
+    </form>
+  }
+</ion-content>

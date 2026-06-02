@@ -1,0 +1,18 @@
+{
+  "name": "Gestion Deportiva",
+  "short_name": "Gestion Deportiva",
+  "description": "Plataforma integral para administrar academias de baloncesto: alumnos, entrenadores, convocatorias con firma digital, logo y sello del club, e impresión o descarga en PDF e imagen.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#047857",
+  "theme_color": "#047857",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "assets/icon/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

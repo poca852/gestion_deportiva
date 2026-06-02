@@ -1,0 +1,34 @@
+<div
+  class="lazy-image"
+  [class.lazy-image--loaded]="imgLoaded"
+  [class.lazy-image--light-bg]="lightBackground"
+  [style.--lazy-image-fit]="objectFit"
+>
+  @if (showSkeleton) {
+    <div class="lazy-image__skeleton" aria-hidden="true">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  }
+
+  @if (src) {
+    <img
+      class="lazy-image__img"
+      [class.lazy-image__img--visible]="imgLoaded"
+      [src]="src"
+      [alt]="alt"
+      loading="lazy"
+      (load)="onImgLoad()"
+      (error)="onImgError()"
+    />
+  }
+
+  @if (showFallback) {
+    <div class="lazy-image__fallback">
+      @if (hasCustomFallback) {
+        <ng-content />
+      } @else {
+        <ion-icon name="image-outline" class="lazy-image__fallback-icon"></ion-icon>
+      }
+    </div>
+  }
+</div>

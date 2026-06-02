@@ -1,0 +1,150 @@
+// ---------------------------------------------------------------------------
+// Stats bar
+// ---------------------------------------------------------------------------
+.stats-bar {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border-color);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--app-surface-elevated);
+  border-radius: var(--app-radius-sm);
+  padding: 8px 18px;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ion-color-medium);
+  font-weight: 600;
+}
+
+// ---------------------------------------------------------------------------
+// List items
+// ---------------------------------------------------------------------------
+.modern-list {
+  margin: 0;
+}
+
+.convocatoria-item {
+  --padding-start: 16px;
+  --padding-end: 12px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+
+  h2 {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 2px;
+  }
+
+  .convocatoria-fecha {
+    font-size: 0.85rem;
+    color: var(--ion-color-medium);
+    margin-bottom: 6px;
+  }
+
+  .convocatoria-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+ion-chip.cat-chip {
+  margin: 0;
+  height: 24px;
+  font-size: 0.7rem;
+  --padding-start: 8px;
+  --padding-end: 8px;
+}
+
+// ---------------------------------------------------------------------------
+// Icon
+// ---------------------------------------------------------------------------
+.convocatoria-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(var(--ion-color-secondary-rgb), 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon {
+    font-size: 1.3rem;
+    color: var(--ion-color-secondary);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Empty state
+// ---------------------------------------------------------------------------
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+
+  .empty-icon-wrapper {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: rgba(var(--ion-color-primary-rgb), 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    color: var(--ion-color-primary);
+  }
+
+  .empty-title {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--ion-color-step-800);
+  }
+
+  .empty-subtitle {
+    margin: 0 0 24px;
+    font-size: 0.9rem;
+    color: var(--ion-color-medium);
+    line-height: 1.4;
+    max-width: 320px;
+  }
+
+  .empty-btn {
+    font-weight: 600;
+    border-radius: var(--app-radius-sm);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Loading
+// ---------------------------------------------------------------------------
+.loading-center {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}

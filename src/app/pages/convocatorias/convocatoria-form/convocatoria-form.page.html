@@ -1,0 +1,105 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/app/convocatorias"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ convocatoriaId ? 'Editar' : 'Nueva' }} convocatoria</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading) {
+    <div class="loading-center">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <!-- DATOS DEL EVENTO -->
+      <div class="form-section">
+        <div class="section-header">
+          <ion-icon name="calendar-outline" class="section-icon"></ion-icon>
+          <span>Datos del evento</span>
+        </div>
+
+        <ion-item>
+          <ion-label position="stacked">Nombre del evento *</ion-label>
+          <ion-input formControlName="nombre_evento" placeholder="Ej: Partido amistoso"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Fecha *</ion-label>
+          <ion-input type="date" formControlName="fecha"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Categoría *</ion-label>
+          <ion-select formControlName="categoria" interface="popover">
+            <ion-select-option value="">Seleccionar...</ion-select-option>
+            @for (cat of categorias; track cat) {
+              <ion-select-option [value]="cat">{{ cat }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+      </div>
+
+      <!-- PLANTILLA -->
+      @if (form.controls.categoria.value) {
+        <div class="form-section">
+          <div class="section-header">
+            <ion-icon name="people-outline" class="section-icon"></ion-icon>
+            <span>Plantilla — {{ form.controls.categoria.value }}</span>
+          </div>
+
+          <div class="plantilla-actions">
+            <ion-button fill="clear" size="small" (click)="selectAll()">Seleccionar todos</ion-button>
+            <ion-button fill="clear" size="small" (click)="deselectAll()">Deseleccionar todos</ion-button>
+          </div>
+
+          @if (loadingAlumnos) {
+            <div class="loading-center">
+              <ion-spinner name="crescent"></ion-spinner>
+            </div>
+          } @else if (alumnos.length === 0) {
+            <div class="empty-plantilla">
+              <ion-icon name="person-outline" class="empty-plantilla-icon"></ion-icon>
+              <p>No hay alumnos en esta categoría.</p>
+            </div>
+          } @else {
+            <div class="alumnos-plantilla">
+              @for (a of alumnos; track a.id) {
+                <div
+                  class="alumno-check-item"
+                  [class.selected]="isSelected(a.id)"
+                  (click)="toggleAlumno(a.id, !isSelected(a.id))"
+                >
+                  <div class="alumno-check-avatar">
+                    {{ a.nombres.charAt(0) }}{{ a.apellidos.charAt(0) }}
+                  </div>
+                  <span class="alumno-check-nombre">{{ a.apellidos }}, {{ a.nombres }}</span>
+                  <ion-icon
+                    [name]="isSelected(a.id) ? 'checkbox-outline' : 'square-outline'"
+                    class="check-icon"
+                    [color]="isSelected(a.id) ? 'primary' : 'medium'"
+                  ></ion-icon>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="selected-count">
+            <strong>{{ selectedIds.size }}</strong> jugador{{ selectedIds.size !== 1 ? 'es' : '' }} seleccionado{{ selectedIds.size !== 1 ? 's' : '' }}
+          </div>
+        </div>
+      }
+
+      <ion-button expand="block" type="submit" [disabled]="saving || selectedIds.size === 0" class="submit-btn">
+        @if (saving) {
+          <ion-spinner name="crescent"></ion-spinner>
+        } @else {
+          <ion-icon [name]="convocatoriaId ? 'checkmark-outline' : 'calendar-outline'" slot="start"></ion-icon>
+          {{ convocatoriaId ? 'Guardar cambios' : 'Crear convocatoria' }}
+        }
+      </ion-button>
+    </form>
+  }
+</ion-content>

@@ -1,0 +1,283 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/app/alumnos"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Detalle del alumno</ion-title>
+    @if (alumno) {
+      <ion-buttons slot="end">
+        <ion-button [routerLink]="['/app/alumnos/editar', alumno.id]" aria-label="Editar alumno">
+          <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    }
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (loading) {
+    <div class="loading-center">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else if (alumno) {
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+      <div class="foto-estudiante">
+        <app-lazy-image
+          [src]="fotoEstudianteUrl"
+          [loading]="!!alumno.foto_estudiante_url && (loadingFotoEstudiante || !fotoEstudianteUrl)"
+          [alt]="'Foto de ' + nombreCompleto"
+          objectFit="cover"
+          [hasCustomFallback]="true"
+        >
+          <div class="foto-placeholder">{{ alumno.nombres.charAt(0) | mayusculas }}</div>
+        </app-lazy-image>
+      </div>
+      <div class="hero-text">
+        <h1>{{ nombreCompleto | mayusculas }}</h1>
+        <div class="hero-badges">
+          <span class="categoria-badge">{{ alumno.categoria | mayusculas }}</span>
+          @if (alumno.nivel) {
+            <span class="nivel-badge" [style.background]="nivelColor(alumno.nivel)">
+              {{ nivelLabel(alumno.nivel) }}
+            </span>
+          }
+          @if (alumno.talla_camiseta) {
+            <span class="talla-badge">Talla {{ alumno.talla_camiseta }}</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- DATOS PERSONALES -->
+    <ion-card class="detail-card">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+          Datos personales
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="datos-grid">
+          <div class="dato-item">
+            <span class="dato-label">Fecha de nacimiento</span>
+            <span class="dato-valor">{{ formatFecha(alumno.fecha_nacimiento) }}</span>
+          </div>
+          <div class="dato-item">
+            <span class="dato-label">Género</span>
+            <span class="dato-valor">{{ generoLabel(alumno.genero) }}</span>
+          </div>
+          @if (alumno.nivel) {
+            <div class="dato-item">
+              <span class="dato-label">Nivel</span>
+              <span class="dato-valor">
+                <span class="nivel-text" [style.color]="nivelColor(alumno.nivel)">
+                  {{ nivelLabel(alumno.nivel) }}
+                </span>
+              </span>
+            </div>
+          }
+          @if (alumno.talla_camiseta) {
+            <div class="dato-item">
+              <span class="dato-label">Talla de camiseta</span>
+              <span class="dato-valor">{{ alumno.talla_camiseta }}</span>
+            </div>
+          }
+          @if (alumno.fecha_ingreso) {
+            <div class="dato-item">
+              <span class="dato-label">Fecha de ingreso</span>
+              <span class="dato-valor">{{ formatFecha(alumno.fecha_ingreso) }}</span>
+            </div>
+          }
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- TUTOR -->
+    <ion-card class="detail-card">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
+          Tutor
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="datos-grid">
+          <div class="dato-item full-width">
+            <span class="dato-label">Nombre del tutor</span>
+            <span class="dato-valor">{{ alumno.nombre_tutor | mayusculas }}</span>
+          </div>
+          <div class="dato-item full-width">
+            <span class="dato-label">Teléfono del tutor</span>
+            <span class="dato-valor telefono-valor">{{ alumno.telefono_tutor }}</span>
+            @if (telefonoTutorHref) {
+              <ion-button
+                expand="block"
+                class="llamar-tutor-btn"
+                [href]="telefonoTutorHref"
+                color="success"
+                size="small"
+              >
+                <ion-icon name="call-outline" slot="start"></ion-icon>
+                Llamar al tutor
+              </ion-button>
+            }
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- PARTIDA DE NACIMIENTO -->
+    <ion-card class="detail-card">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="document-outline" aria-hidden="true"></ion-icon>
+          Partida de nacimiento
+        </ion-card-title>
+        <ion-card-subtitle>Documento del estudiante</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        @if (!tieneDocumento) {
+          <div class="empty-document">
+            <ion-icon name="document-outline" class="empty-doc-icon"></ion-icon>
+            <ion-note>No hay documento registrado.</ion-note>
+          </div>
+        } @else if (loadingDocumento) {
+          <div class="loading-inline">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else if (documentoEsPdf && documentoPdfUrl) {
+          <iframe
+            class="documento-pdf"
+            [src]="documentoPdfUrl"
+            title="Vista previa del documento PDF"
+          ></iframe>
+        } @else if (documentoUrl) {
+          <div class="documento-imagen">
+            <app-lazy-image
+              [src]="documentoUrl"
+              [loading]="loadingDocumento"
+              alt="Documento del alumno"
+              objectFit="contain"
+            />
+          </div>
+        } @else {
+          <ion-note>No se pudo cargar la vista previa del documento.</ion-note>
+        }
+
+        @if (tieneDocumento) {
+          <ion-button
+            expand="block"
+            class="download-btn"
+            (click)="descargarDocumento()"
+            [disabled]="descargandoDocumento"
+          >
+            @if (descargandoDocumento) {
+              <ion-spinner name="crescent"></ion-spinner>
+            } @else {
+              <ion-icon name="download-outline" slot="start"></ion-icon>
+              Descargar documento
+            }
+          </ion-button>
+        }
+      </ion-card-content>
+    </ion-card>
+
+    <!-- DOCUMENTO DEL PADRE -->
+    <ion-card class="detail-card">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="document-outline" aria-hidden="true"></ion-icon>
+          Documento del padre de familia
+        </ion-card-title>
+        <ion-card-subtitle>Identificación del tutor</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        @if (!tieneDocumentoPadre) {
+          <div class="empty-document">
+            <ion-icon name="document-outline" class="empty-doc-icon"></ion-icon>
+            <ion-note>No hay documento registrado.</ion-note>
+          </div>
+        } @else if (loadingDocumentoPadre) {
+          <div class="loading-inline">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else if (documentoPadreEsPdf && documentoPadrePdfUrl) {
+          <iframe
+            class="documento-pdf"
+            [src]="documentoPadrePdfUrl"
+            title="Vista previa del documento del padre PDF"
+          ></iframe>
+        } @else if (documentoPadreUrl) {
+          <div class="documento-imagen">
+            <app-lazy-image
+              [src]="documentoPadreUrl"
+              [loading]="loadingDocumentoPadre"
+              alt="Documento del padre"
+              objectFit="contain"
+            />
+          </div>
+        } @else {
+          <ion-note>No se pudo cargar la vista previa del documento.</ion-note>
+        }
+
+        @if (tieneDocumentoPadre) {
+          <ion-button
+            expand="block"
+            class="download-btn"
+            (click)="descargarDocumentoPadre()"
+            [disabled]="descargandoDocumento"
+          >
+            @if (descargandoDocumento) {
+              <ion-spinner name="crescent"></ion-spinner>
+            } @else {
+              <ion-icon name="download-outline" slot="start"></ion-icon>
+              Descargar documento
+            }
+          </ion-button>
+        }
+      </ion-card-content>
+    </ion-card>
+
+    <!-- HISTORIAL DE CONVOCATORIAS -->
+    <ion-card class="detail-card">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
+          Historial de convocatorias
+        </ion-card-title>
+        <ion-card-subtitle>
+          {{ convocatorias.length }}
+          {{ convocatorias.length === 1 ? 'convocatoria' : 'convocatorias' }}
+        </ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content class="convocatorias-card-content">
+        @if (loadingConvocatorias) {
+          <div class="loading-inline">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else if (convocatorias.length === 0) {
+          <div class="empty-document">
+            <ion-icon name="calendar-outline" class="empty-doc-icon"></ion-icon>
+            <ion-note>Este alumno aún no ha sido convocado a ningún evento.</ion-note>
+          </div>
+        } @else {
+          <ion-list lines="full" class="convocatorias-list">
+            @for (c of convocatorias; track c.id) {
+              <ion-item class="convocatoria-item">
+                <div class="convocatoria-icon" slot="start">
+                  <ion-icon name="basketball-outline" color="secondary"></ion-icon>
+                </div>
+                <ion-label>
+                  <h3>{{ c.nombre_evento }}</h3>
+                  <p>{{ formatFecha(c.fecha) }}</p>
+                </ion-label>
+                <ion-chip slot="end" color="secondary">{{ c.categoria }}</ion-chip>
+              </ion-item>
+            }
+          </ion-list>
+        }
+      </ion-card-content>
+    </ion-card>
+  }
+</ion-content>

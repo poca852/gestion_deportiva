@@ -1,0 +1,35 @@
+// Academia Real Libertad — verde esmeralda + ámbar
+:root {
+  --ion-color-primary: #047857;
+  --ion-color-primary-rgb: 4, 120, 87;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #046a4c;
+  --ion-color-primary-tint: #1d8563;
+
+  --ion-color-secondary: #b45309;
+  --ion-color-secondary-rgb: 180, 83, 9;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #9f4908;
+  --ion-color-secondary-tint: #bc6422;
+
+  --ion-color-tertiary: #334155;
+  --ion-color-tertiary-rgb: 51, 65, 85;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #2d394a;
+  --ion-color-tertiary-tint: #475466;
+
+  --app-brand-gradient-start: #064e3b;
+  --app-brand-gradient-mid: #047857;
+  --app-brand-gradient-end: #059669;
+  --app-brand-accent-light: #fbbf24;
+
+  --app-border-color: var(--ion-color-step-150);
+  --app-surface: var(--ion-color-step-50);
+  --app-surface-elevated: var(--ion-color-step-100);
+  --app-radius-sm: 8px;
+  --app-radius-md: 12px;
+  --app-page-padding: 16px;
+}

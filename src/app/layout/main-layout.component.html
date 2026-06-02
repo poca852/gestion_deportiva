@@ -1,0 +1,91 @@
+<ion-split-pane contentId="main-content" when="md">
+  <ion-menu contentId="main-content" type="overlay" menuId="main-menu">
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title class="brand-title">
+          <div class="brand-header">
+            @if (isSuperAdminLayout) {
+              <ion-icon name="shield-checkmark-outline" class="brand-fallback-icon"></ion-icon>
+              <span class="brand-name">Panel de Control</span>
+            } @else {
+              @if (branding.hasLogo() || branding.logoLoading()) {
+                <app-lazy-image
+                  [src]="branding.logoUrl()"
+                  [loading]="branding.logoLoading()"
+                  [alt]="'Logo de ' + branding.nombre()"
+                  objectFit="contain"
+                  class="brand-logo"
+                  [hasCustomFallback]="true"
+                >
+                  <ion-icon name="basketball-outline" class="brand-fallback-icon"></ion-icon>
+                </app-lazy-image>
+              } @else {
+                <ion-icon name="basketball-outline" class="brand-fallback-icon"></ion-icon>
+              }
+              <span class="brand-name">{{ branding.nombre() }}</span>
+            }
+          </div>
+        </ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      @if (isSuperAdminLayout) {
+        <div class="user-info super-admin-info">
+          <p class="user-name">{{ authService.currentProfile?.nombre | titlecase }}</p>
+          <p class="user-role super-admin-role">Super Administrador</p>
+        </div>
+      } @else {
+        <div class="user-info">
+          <p class="user-name">{{ authService.currentProfile?.nombre | titlecase }}</p>
+          <p class="user-role">
+            {{ authService.isAdmin() ? 'Administrador' : 'Entrenador' }}
+            @if (authService.categoriasLabel()) {
+              · {{ authService.categoriasLabel() }}
+            }
+          </p>
+        </div>
+      }
+
+      <ion-list lines="none">
+        @if (isSuperAdminLayout) {
+          <ion-menu-toggle auto-hide="false">
+            <ion-item
+              routerLink="/admin/academias"
+              routerLinkActive="selected"
+              button
+              detail="false"
+            >
+              <ion-icon name="business-outline" slot="start"></ion-icon>
+              <ion-label>Academias</ion-label>
+            </ion-item>
+          </ion-menu-toggle>
+        } @else {
+          @for (item of visibleMenuItems(); track item.url) {
+            <ion-menu-toggle auto-hide="false">
+              <ion-item
+                [routerLink]="item.url"
+                routerLinkActive="selected"
+                (click)="closeMenu()"
+                button
+                detail="false"
+              >
+                <ion-icon [name]="item.icon" slot="start"></ion-icon>
+                <ion-label>{{ item.title }}</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+          }
+        }
+
+        <ion-item button detail="false" (click)="logout()" class="logout-item">
+          <ion-icon name="log-out-outline" slot="start"></ion-icon>
+          <ion-label>Cerrar sesión</ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ion-menu>
+
+  <div id="main-content" class="ion-page">
+    <ion-router-outlet></ion-router-outlet>
+  </div>
+</ion-split-pane>
