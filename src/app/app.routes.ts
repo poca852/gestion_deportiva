@@ -15,6 +15,13 @@ export const routes: Routes = [
     canActivate: [loginGuard],
   },
   {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./pages/reset-password/reset-password.page').then(
+        (m) => m.ResetPasswordPage
+      ),
+  },
+  {
     path: 'seleccionar-academia',
     loadComponent: () =>
       import('./pages/seleccionar-academia/seleccionar-academia.page').then(
