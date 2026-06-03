@@ -12,4 +12,6 @@ export const environment = {
   staging: import.meta.env.NG_APP_ENV === 'staging',
   supabaseUrl,
   supabaseAnonKey,
+  /** URL base de la aplicación para redirects de Supabase Auth */
+  siteUrl: import.meta.env.NG_APP_SITE_URL || window.location.origin,
 };
