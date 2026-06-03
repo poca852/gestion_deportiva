@@ -19,10 +19,11 @@ import {
   IonIcon,
   IonSelect,
   IonSelectOption,
+  AlertController,
   ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { saveOutline, keyOutline, sendOutline } from 'ionicons/icons';
+import { saveOutline, keyOutline, sendOutline, lockClosedOutline } from 'ionicons/icons';
 import { EntrenadoresService } from '../../../services/entrenadores.service';
 import { AcademiaService } from '../../../services/academia.service';
 import { SupabaseService } from '../../../services/supabase.service';
@@ -31,6 +32,7 @@ import {
   RolEntrenador,
 } from '../../../interfaces/entrenador.interface';
 import { Academia } from '../../../interfaces/academia.interface';
+import { environment } from '../../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -181,6 +183,17 @@ import { firstValueFrom } from 'rxjs';
               <ion-icon name="send-outline" slot="start"></ion-icon>
               {{ reseteandoPassword ? 'Enviando...' : 'Enviar enlace de restablecimiento' }}
             </ion-button>
+
+            <ion-button
+              expand="block"
+              fill="outline"
+              color="secondary"
+              class="ion-margin-top"
+              (click)="cambiarPasswordDirecto()"
+            >
+              <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+              Cambiar contraseña directamente
+            </ion-button>
           }
         </div>
       }
@@ -194,6 +207,7 @@ export class UsuarioFormPage implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toastCtrl = inject(ToastController);
+  private readonly alertCtrl = inject(AlertController);
 
   esEdicion = false;
   usuarioId: string | null = null;
@@ -221,7 +235,7 @@ export class UsuarioFormPage implements OnInit {
   error = '';
 
   constructor() {
-    addIcons({ saveOutline, keyOutline, sendOutline });
+    addIcons({ saveOutline, keyOutline, sendOutline, lockClosedOutline });
   }
 
   async ngOnInit(): Promise<void> {
@@ -365,9 +379,11 @@ export class UsuarioFormPage implements OnInit {
 
     this.reseteandoPassword = true;
     try {
+      const redirectTo = `${environment.siteUrl}/reset-password`;
       const { error } =
         await this.supabaseService.supabase.auth.resetPasswordForEmail(
-          this.form.correo
+          this.form.correo,
+          { redirectTo }
         );
       if (error) throw error;
 
@@ -387,5 +403,57 @@ export class UsuarioFormPage implements OnInit {
     } finally {
       this.reseteandoPassword = false;
     }
+  }
+
+  async cambiarPasswordDirecto(): Promise<void> {
+    if (!this.usuarioId) return;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Cambiar contraseña',
+      subHeader: this.form.nombre,
+      message: 'Ingresa la nueva contraseña para este usuario.',
+      inputs: [
+        {
+          name: 'password',
+          type: 'password',
+          placeholder: 'Nueva contraseña (mín. 6 caracteres)',
+          attributes: { minlength: 6 },
+        },
+        {
+          name: 'confirm',
+          type: 'password',
+          placeholder: 'Confirmar contraseña',
+        },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Cambiar',
+          handler: (data) => {
+            const password: string = data?.password?.trim();
+            const confirm: string = data?.confirm?.trim();
+            if (!password || password.length < 6) {
+              this.mostrarToast('La contraseña debe tener al menos 6 caracteres', 'danger');
+              return false;
+            }
+            if (password !== confirm) {
+              this.mostrarToast('Las contraseñas no coinciden', 'danger');
+              return false;
+            }
+            this.entrenadoresService.updatePassword(this.usuarioId!, password).subscribe({
+              next: () => this.mostrarToast('Contraseña actualizada correctamente', 'success'),
+              error: (err: Error) => this.mostrarToast(err.message, 'danger'),
+            });
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async mostrarToast(message: string, color: 'success' | 'danger'): Promise<void> {
+    const toast = await this.toastCtrl.create({ message, duration: 2500, color });
+    await toast.present();
   }
 }
