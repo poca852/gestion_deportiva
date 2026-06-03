@@ -57,15 +57,17 @@ Deno.serve(async (req) => {
     return jsonResponse(401, { error: 'Unauthorized' });
   }
 
-  // Verificar que el solicitante es admin
-  const { data: requester, error: requesterError } = await supabaseAdmin
-    .from('entrenadores')
-    .select('rol')
-    .eq('id', user.id)
-    .single();
+  // Verificar que el solicitante es admin o super_admin
+  const [entrenadorResult, superAdminResult] = await Promise.all([
+    supabaseAdmin.from('entrenadores').select('rol, academia_id').eq('id', user.id).maybeSingle(),
+    supabaseAdmin.from('super_admins').select('id').eq('id', user.id).maybeSingle(),
+  ]);
 
-  if (requesterError || !requester || requester.rol !== 'admin') {
-    return jsonResponse(403, { error: 'Only admins can update coach passwords' });
+  const esSuperAdmin = !!superAdminResult.data;
+  const esAdmin = !esSuperAdmin && entrenadorResult.data?.rol === 'admin';
+
+  if (!esSuperAdmin && !esAdmin) {
+    return jsonResponse(403, { error: 'Solo administradores pueden cambiar contraseñas' });
   }
 
   // Leer payload
@@ -91,17 +93,26 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Verificar que el coach existe en la tabla entrenadores
-  const { data: coach, error: coachError } = await supabaseAdmin
-    .from('entrenadores')
-    .select('id')
-    .eq('id', coachId)
-    .single();
+  // Verificar que el usuario target existe (solo para admins de academia)
+  if (esAdmin) {
+    const { data: coach, error: coachError } = await supabaseAdmin
+      .from('entrenadores')
+      .select('id, academia_id')
+      .eq('id', coachId)
+      .single();
 
-  if (coachError || !coach) {
-    return jsonResponse(404, {
-      error: 'El entrenador no existe',
-    });
+    if (coachError || !coach) {
+      return jsonResponse(404, {
+        error: 'El usuario no existe',
+      });
+    }
+
+    // El admin solo puede cambiar contraseñas de su propia academia
+    if (coach.academia_id !== entrenadorResult.data?.academia_id) {
+      return jsonResponse(403, {
+        error: 'No puedes cambiar la contraseña de un usuario de otra academia',
+      });
+    }
   }
 
   // Actualizar la contraseña en Auth
