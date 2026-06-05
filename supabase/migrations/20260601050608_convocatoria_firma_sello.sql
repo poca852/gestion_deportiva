@@ -1,12 +1,11 @@
--- Agrega talla de camiseta y foto del documento del padre al alumno
+-- Sello del equipo, firma del entrenador y políticas de storage
 
-ALTER TABLE public.alumnos
-  ADD COLUMN IF NOT EXISTS talla_camiseta TEXT;
+ALTER TABLE public.academia_config
+  ADD COLUMN IF NOT EXISTS sello_url TEXT;
 
-ALTER TABLE public.alumnos
-  ADD COLUMN IF NOT EXISTS foto_documento_padre_url TEXT;
+ALTER TABLE public.convocatorias
+  ADD COLUMN IF NOT EXISTS firma_entrenador_url TEXT;
 
--- Storage: permitir documentos-padre (mismos permisos que documentos)
 DROP POLICY IF EXISTS "storage_expedientes_insert_authenticated" ON storage.objects;
 DROP POLICY IF EXISTS "storage_expedientes_update_authenticated" ON storage.objects;
 DROP POLICY IF EXISTS "storage_expedientes_delete_authenticated" ON storage.objects;
@@ -18,7 +17,7 @@ CREATE POLICY "storage_expedientes_insert_authenticated"
     bucket_id = 'expedientes-academia'
     AND public.is_authenticated_entrenador()
     AND (
-      (storage.foldername(name))[1] IN ('fotos-estudiante', 'documentos', 'documentos-padre')
+      (storage.foldername(name))[1] IN ('fotos-estudiante', 'documentos')
       OR (
         (storage.foldername(name))[1] IN ('logos-academia', 'sellos-academia')
         AND public.get_user_rol() = 'admin'
@@ -48,7 +47,7 @@ CREATE POLICY "storage_expedientes_update_authenticated"
     bucket_id = 'expedientes-academia'
     AND public.is_authenticated_entrenador()
     AND (
-      (storage.foldername(name))[1] IN ('fotos-estudiante', 'documentos', 'documentos-padre')
+      (storage.foldername(name))[1] IN ('fotos-estudiante', 'documentos')
       OR (
         (storage.foldername(name))[1] IN ('logos-academia', 'sellos-academia')
         AND public.get_user_rol() = 'admin'
@@ -74,7 +73,7 @@ CREATE POLICY "storage_expedientes_delete_authenticated"
     bucket_id = 'expedientes-academia'
     AND public.is_authenticated_entrenador()
     AND (
-      (storage.foldername(name))[1] IN ('fotos-estudiante', 'documentos', 'documentos-padre')
+      (storage.foldername(name))[1] IN ('fotos-estudiante', 'documentos')
       OR (
         (storage.foldername(name))[1] IN ('logos-academia', 'sellos-academia')
         AND public.get_user_rol() = 'admin'

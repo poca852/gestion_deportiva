@@ -1,7 +1,3 @@
--- Migración: tabla academia_config (configuración global de la academia)
--- Ejecutar en: Supabase Dashboard → SQL Editor → Run
--- Requiere que ya existan: public.set_updated_at(), public.get_user_rol()
-
 CREATE TABLE IF NOT EXISTS public.academia_config (
   id BOOLEAN PRIMARY KEY DEFAULT true CHECK (id = true),
   nombre TEXT NOT NULL,

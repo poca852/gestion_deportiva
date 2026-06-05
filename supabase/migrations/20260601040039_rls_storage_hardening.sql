@@ -1,9 +1,3 @@
--- Endurecimiento RLS + Storage: solo usuarios autenticados con perfil de entrenador
--- pueden subir archivos. Bucket expedientes-academia pasa a privado.
-
--- ---------------------------------------------------------------------------
--- Helpers de seguridad
--- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.is_authenticated_entrenador()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -25,14 +19,10 @@ REVOKE EXECUTE ON FUNCTION public.get_user_categoria() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_user_rol() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_user_categoria() TO authenticated;
 
--- Sin acceso directo de anon a tablas (RLS ya aplicaba, esto cierra API/GraphQL)
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon;
 REVOKE ALL ON ALL ROUTINES IN SCHEMA public FROM anon;
 
--- ---------------------------------------------------------------------------
--- Entrenadores: un coach no puede elevar su propio rol
--- ---------------------------------------------------------------------------
 DROP POLICY IF EXISTS "entrenadores_self_update" ON public.entrenadores;
 CREATE POLICY "entrenadores_self_update"
   ON public.entrenadores FOR UPDATE
@@ -47,24 +37,22 @@ CREATE POLICY "entrenadores_self_update"
     )
   );
 
--- Academia: solo admin puede borrar configuración
 DROP POLICY IF EXISTS "academia_config_delete_admin" ON public.academia_config;
 CREATE POLICY "academia_config_delete_admin"
   ON public.academia_config FOR DELETE
   TO authenticated
   USING (public.get_user_rol() = 'admin');
 
--- ---------------------------------------------------------------------------
--- Storage: expedientes-academia (privado, solo autenticados con perfil)
--- ---------------------------------------------------------------------------
-UPDATE storage.buckets
-SET public = false
-WHERE id = 'expedientes-academia';
+UPDATE storage.buckets SET public = false WHERE id = 'expedientes-academia';
 
 DROP POLICY IF EXISTS "storage_expedientes_select" ON storage.objects;
 DROP POLICY IF EXISTS "storage_expedientes_insert" ON storage.objects;
 DROP POLICY IF EXISTS "storage_expedientes_update" ON storage.objects;
 DROP POLICY IF EXISTS "storage_expedientes_delete" ON storage.objects;
+DROP POLICY IF EXISTS "storage_expedientes_select_authenticated" ON storage.objects;
+DROP POLICY IF EXISTS "storage_expedientes_insert_authenticated" ON storage.objects;
+DROP POLICY IF EXISTS "storage_expedientes_update_authenticated" ON storage.objects;
+DROP POLICY IF EXISTS "storage_expedientes_delete_authenticated" ON storage.objects;
 
 CREATE POLICY "storage_expedientes_select_authenticated"
   ON storage.objects FOR SELECT

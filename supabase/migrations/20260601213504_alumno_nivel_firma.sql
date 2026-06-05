@@ -1,12 +1,7 @@
--- Nivel de clasificación del jugador y firma del entrenador en alumnos
+ALTER TABLE public.alumnos ADD COLUMN IF NOT EXISTS nivel TEXT;
 
-ALTER TABLE public.alumnos
-  ADD COLUMN IF NOT EXISTS nivel TEXT;
+ALTER TABLE public.alumnos ADD COLUMN IF NOT EXISTS firma_entrenador_url TEXT;
 
-ALTER TABLE public.alumnos
-  ADD COLUMN IF NOT EXISTS firma_entrenador_url TEXT;
-
--- Storage: permitir firmas-alumno (admin o cualquier entrenador autenticado)
 DROP POLICY IF EXISTS "storage_expedientes_insert_authenticated" ON storage.objects;
 DROP POLICY IF EXISTS "storage_expedientes_update_authenticated" ON storage.objects;
 DROP POLICY IF EXISTS "storage_expedientes_delete_authenticated" ON storage.objects;
