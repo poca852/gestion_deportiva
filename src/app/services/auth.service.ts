@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   BehaviorSubject,
@@ -11,22 +11,33 @@ import {
 } from 'rxjs';
 import { Session, User } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
+import { StorageService } from './storage.service';
 import { UserProfile } from '../interfaces/user-profile.interface';
 import { Entrenador } from '../interfaces/entrenador.interface';
 import { AcademiaContextService } from './academia-context.service';
 
 const PROFILE_CACHE_KEY = 'auth_profile_cache';
+/** Prefijo usado por Supabase para claves de sesión en el storage personalizado */
+const SB_STORAGE_PREFIX = 'sb-';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly supabaseService = inject(SupabaseService);
+  private readonly router = inject(Router);
+  private readonly academiaContext = inject(AcademiaContextService);
+  private readonly storageService = inject(StorageService);
+
   private readonly profileSubject = new BehaviorSubject<UserProfile | null>(
     null
   );
   private readonly profileSignal = signal<UserProfile | null>(null);
   /** Incrementa al cambiar o limpiar sesión; invalida peticiones de listas en curso. */
   private dataEpoch = 0;
+  /** Flag para evitar que onAuthStateChange sobreescriba una carga de perfil en curso */
+  private isLoadingProfile = false;
+
   readonly profile$ = this.profileSubject.asObservable();
   readonly isAuthenticated = signal(false);
   readonly isAdmin = computed(() => {
@@ -52,11 +63,7 @@ export class AuthService {
     return cats.length > 0 ? cats.join(', ') : null;
   });
 
-  constructor(
-    private readonly supabaseService: SupabaseService,
-    private readonly router: Router,
-    private readonly academiaContext: AcademiaContextService
-  ) {
+  constructor() {
     this.initSession();
   }
 
@@ -86,16 +93,21 @@ export class AuthService {
   }
 
   private initSession(): void {
+    // Obtener sesión inicial
     this.supabaseService.supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         this.handleSession(data.session);
       }
     });
 
+    // Suscribirse a cambios de auth
     this.supabaseService.supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session) {
-          this.handleSession(session);
+          // Solo manejar si no hay una carga de perfil en curso
+          if (!this.isLoadingProfile) {
+            this.handleSession(session);
+          }
         } else {
           this.clearProfile();
         }
@@ -109,20 +121,31 @@ export class AuthService {
       return;
     }
 
-    // Intentar restaurar perfil desde caché antes de consultar BD
-    const cached = this.restoreProfileFromCache(session.user.id);
-    if (cached) {
-      this.applyProfile(cached);
-      return;
-    }
-
+    // Si el usuario cambió (diferente al actual), limpiar todo primero
     if (current) {
       this.clearProfile();
     }
-    this.loadProfile(session.user).subscribe();
+
+    // Intentar restaurar perfil desde caché antes de consultar BD
+    this.restoreProfileFromCache(session.user.id).then((cached) => {
+      if (cached) {
+        this.applyProfile(cached);
+        return;
+      }
+      this.isLoadingProfile = true;
+      this.loadProfile(session.user).subscribe({
+        complete: () => {
+          this.isLoadingProfile = false;
+        },
+        error: () => {
+          this.isLoadingProfile = false;
+        },
+      });
+    });
   }
 
   login(email: string, password: string): Observable<UserProfile> {
+    this.isLoadingProfile = true;
     return from(
       this.supabaseService.supabase.auth.signInWithPassword({ email, password })
     ).pipe(
@@ -130,18 +153,75 @@ export class AuthService {
         if (error) throw error;
         if (!data.user) throw new Error('No se pudo iniciar sesión');
         return this.loadProfile(data.user);
+      }),
+      tap({
+        complete: () => {
+          this.isLoadingProfile = false;
+        },
+        error: () => {
+          this.isLoadingProfile = false;
+        },
       })
     );
   }
 
   logout(): Observable<void> {
     return from(this.supabaseService.supabase.auth.signOut()).pipe(
-      tap(() => {
+      tap(async () => {
         this.clearProfile();
-        this.router.navigate(['/login']);
+        // Limpiar todas las claves de sesión de Supabase del storage
+        await this.clearSupabaseSessionStorage();
+        // Navegar con replaceUrl para que no se pueda volver atrás
+        await this.router.navigate(['/login'], { replaceUrl: true });
       }),
       map(() => undefined)
     );
+  }
+
+  /**
+   * Refresca la sesión actual. Se llama al reabrir la app (app resume).
+   * Si el token expiró, redirige al login.
+   */
+  async refreshSession(): Promise<void> {
+    try {
+      const { data, error } =
+        await this.supabaseService.supabase.auth.refreshSession();
+      if (error || !data.session) {
+        await this.handleSessionExpired();
+        return;
+      }
+      // Verificar que el perfil corresponde a la sesión
+      const profileId = this.profileSubject.value?.id;
+      if (profileId !== data.session.user.id) {
+        // El usuario cambió mientras la app estaba en background
+        this.clearProfile();
+        this.handleSession(data.session);
+      }
+    } catch {
+      await this.handleSessionExpired();
+    }
+  }
+
+  private async handleSessionExpired(): Promise<void> {
+    await this.clearSupabaseSessionStorage();
+    this.clearProfile();
+    await this.router.navigate(['/login'], { replaceUrl: true });
+  }
+
+  /**
+   * Limpia todas las claves de Supabase del storage.
+   */
+  private async clearSupabaseSessionStorage(): Promise<void> {
+    try {
+      const allKeys = await this.storageService.keys();
+      for (const key of allKeys) {
+        if (key.startsWith(SB_STORAGE_PREFIX)) {
+          await this.storageService.remove(key);
+        }
+      }
+    } catch {
+      // Si falla, continuar
+    }
   }
 
   /**
@@ -212,7 +292,7 @@ export class AuthService {
   }
 
   private finalizeProfile(profile: UserProfile): Observable<UserProfile> {
-    // Persistir perfil en sessionStorage para recargas rápidas
+    // Persistir perfil en storage para recargas rápidas
     this.persistProfileToCache(profile);
 
     return this.applyProfile(profile);
@@ -283,23 +363,23 @@ export class AuthService {
     return profile;
   }
 
-  // ---- Caché de perfil en sessionStorage ----
+  // ---- Caché de perfil en Capacitor Preferences / localStorage ----
 
-  private persistProfileToCache(profile: UserProfile): void {
+  private async persistProfileToCache(profile: UserProfile): Promise<void> {
     try {
       const cache = {
         profile,
         savedAt: Date.now(),
       };
-      sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(cache));
+      await this.storageService.set(PROFILE_CACHE_KEY, JSON.stringify(cache));
     } catch {
-      // sessionStorage no disponible o lleno
+      // Storage no disponible o lleno
     }
   }
 
-  private restoreProfileFromCache(userId: string): UserProfile | null {
+  private async restoreProfileFromCache(userId: string): Promise<UserProfile | null> {
     try {
-      const raw = sessionStorage.getItem(PROFILE_CACHE_KEY);
+      const raw = await this.storageService.get(PROFILE_CACHE_KEY);
       if (!raw) return null;
 
       const cache = JSON.parse(raw) as {
@@ -309,7 +389,7 @@ export class AuthService {
 
       // El caché expira después de 1 hora
       if (Date.now() - cache.savedAt > 3600_000) {
-        sessionStorage.removeItem(PROFILE_CACHE_KEY);
+        await this.storageService.remove(PROFILE_CACHE_KEY);
         return null;
       }
 
@@ -323,11 +403,11 @@ export class AuthService {
     }
   }
 
-  private clearProfileCache(): void {
+  private async clearProfileCache(): Promise<void> {
     try {
-      sessionStorage.removeItem(PROFILE_CACHE_KEY);
+      await this.storageService.remove(PROFILE_CACHE_KEY);
     } catch {
-      // sessionStorage no disponible
+      // Storage no disponible
     }
   }
 }

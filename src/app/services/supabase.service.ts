@@ -3,6 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 import { resizeImage } from '../utils/resize-image.util';
 import { AcademiaContextService } from './academia-context.service';
+import { StorageService } from './storage.service';
 
 const EXPEDIENTES_BUCKET = 'expedientes-academia';
 const SIGNED_URL_TTL_SEC = 60 * 60;
@@ -27,7 +28,7 @@ export class SupabaseService {
   private readonly client: SupabaseClient;
   private readonly injector = inject(Injector);
 
-  /** Prefijo para claves en sessionStorage */
+  /** Prefijo para claves en StorageService (Capacitor Preferences / localStorage) */
   private static readonly CACHE_KEY = 'supabase_url_cache';
 
   /** Cache en memoria de URLs resueltas (path -> { url, expiresAt }) */
@@ -48,10 +49,32 @@ export class SupabaseService {
     return this._academiaContext;
   }
 
+  private readonly storageService: StorageService;
+
   constructor() {
+    this.storageService = inject(StorageService);
+
     this.client = createClient(
       environment.supabaseUrl,
-      environment.supabaseAnonKey
+      environment.supabaseAnonKey,
+      {
+        auth: {
+          storage: {
+            getItem: async (key: string): Promise<string | null> => {
+              return this.storageService.get(key);
+            },
+            setItem: async (key: string, value: string): Promise<void> => {
+              await this.storageService.set(key, value);
+            },
+            removeItem: async (key: string): Promise<void> => {
+              await this.storageService.remove(key);
+            },
+          },
+          autoRefreshToken: true,
+          detectSessionInUrl: false,
+          persistSession: true,
+        },
+      }
     );
     this.restoreCache();
   }
@@ -60,23 +83,23 @@ export class SupabaseService {
    * Limpia toda la caché de URLs. Debe llamarse al cambiar de academia
    * para evitar servir URLs de la academia anterior.
    */
-  clearCache(): void {
+  async clearCache(): Promise<void> {
     this.urlCache.clear();
     this.lastAcademiaId = null;
     try {
-      sessionStorage.removeItem(SupabaseService.CACHE_KEY);
+      await this.storageService.remove(SupabaseService.CACHE_KEY);
     } catch {
-      // sessionStorage no disponible
+      // Storage no disponible
     }
   }
 
   /**
    * Verifica si la academia activa cambió y limpia la caché en ese caso.
    */
-  private checkAcademiaChanged(): void {
+  private async checkAcademiaChanged(): Promise<void> {
     const currentId = this.academiaContext.academiaId();
     if (currentId !== this.lastAcademiaId) {
-      this.clearCache();
+      await this.clearCache();
       this.lastAcademiaId = currentId;
     }
   }
@@ -138,9 +161,9 @@ export class SupabaseService {
     return false;
   }
 
-  private restoreCache(): void {
+  private async restoreCache(): Promise<void> {
     try {
-      const raw = sessionStorage.getItem(SupabaseService.CACHE_KEY);
+      const raw = await this.storageService.get(SupabaseService.CACHE_KEY);
       if (raw) {
         const entries = JSON.parse(raw) as [string, { url: string; expiresAt: number }][];
         for (const [key, value] of entries) {
@@ -150,16 +173,16 @@ export class SupabaseService {
         }
       }
     } catch {
-      // sessionStorage no disponible o datos corruptos
+      // Storage no disponible o datos corruptos
     }
   }
 
-  private persistCache(): void {
+  private async persistCache(): Promise<void> {
     try {
       const entries = [...this.urlCache.entries()];
-      sessionStorage.setItem(SupabaseService.CACHE_KEY, JSON.stringify(entries));
+      await this.storageService.set(SupabaseService.CACHE_KEY, JSON.stringify(entries));
     } catch {
-      // sessionStorage lleno o no disponible
+      // Storage lleno o no disponible
     }
   }
 
@@ -234,7 +257,7 @@ export class SupabaseService {
     });
 
     this.urlCache.delete(path);
-    this.persistCache();
+    await this.persistCache();
 
     return path;
   }
@@ -382,7 +405,7 @@ export class SupabaseService {
     }
 
     // Invalidar caché si cambió la academia activa
-    this.checkAcademiaChanged();
+    await this.checkAcademiaChanged();
 
     if (!cacheBust) {
       const cached = this.urlCache.get(path);
@@ -410,7 +433,7 @@ export class SupabaseService {
           url: signedUrl,
           expiresAt: Date.now() + (SIGNED_URL_TTL_SEC - 5 * 60) * 1000,
         });
-        this.persistCache();
+        await this.persistCache();
       }
 
       return signedUrl;
