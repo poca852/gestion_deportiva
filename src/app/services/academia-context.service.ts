@@ -1,12 +1,19 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Academia } from '../interfaces/academia.interface';
 import { SupabaseService } from './supabase.service';
+import { StorageService } from './storage.service';
+
+const ACADEMIA_CACHE_KEY = 'academia_seleccionada_id';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AcademiaContextService {
+  private readonly supabaseService = inject(SupabaseService);
+  private readonly router = inject(Router);
+  private readonly storageService = inject(StorageService);
+
   /** Academia actualmente activa en la sesión */
   readonly academiaActual = signal<Academia | null>(null);
   /** Lista de academias disponibles para el usuario actual */
@@ -30,16 +37,12 @@ export class AcademiaContextService {
    */
   readonly contextEpoch = computed(() => `${this.academiaId()}-${this.switchCount}`);
 
-  constructor(
-    private readonly supabaseService: SupabaseService,
-    private readonly router: Router,
-  ) {}
-
   /**
    * Carga las academias disponibles. Si el usuario es super_admin,
    * carga todas las academias. Si es admin/coach, carga solo su academia.
    * Además, si hay exactamente una academia disponible, la selecciona
    * automáticamente sin hacer otra consulta a la BD.
+   * Si hay múltiples academias, intenta restaurar la última selección persistida.
    */
   async loadAcademias(profile: {
     rol: string;
@@ -59,9 +62,11 @@ export class AcademiaContextService {
         const academias = (data ?? []) as Academia[];
         this.academiasDisponibles.set(academias);
 
-        // Auto-seleccionar si solo hay una
         if (academias.length === 1) {
           this.setAcademiaFromData(academias[0]);
+        } else if (academias.length > 1) {
+          // Intentar restaurar la última academia seleccionada
+          await this.tryRestoreAcademia(academias);
         }
       } else if (profile.academia_id) {
         // Admin/coach: solo su academia
@@ -75,7 +80,6 @@ export class AcademiaContextService {
         const academias = data ? [data as Academia] : [];
         this.academiasDisponibles.set(academias);
 
-        // Auto-seleccionar la única academia disponible
         if (academias.length === 1) {
           this.setAcademiaFromData(academias[0]);
         }
@@ -91,12 +95,34 @@ export class AcademiaContextService {
   }
 
   /**
+   * Intenta restaurar la academia seleccionada previamente.
+   * Retorna true si se restauró exitosamente.
+   */
+  private async tryRestoreAcademia(academias: Academia[]): Promise<boolean> {
+    try {
+      const storedId = await this.storageService.get(ACADEMIA_CACHE_KEY);
+      if (!storedId) return false;
+
+      const match = academias.find((a) => a.id === storedId);
+      if (match) {
+        this.academiaActual.set(match);
+        this.switchCount++;
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Establece la academia activa a partir de los datos ya cargados,
    * sin hacer otra consulta a la BD.
    */
   private setAcademiaFromData(academia: Academia): void {
     this.academiaActual.set(academia);
     this.switchCount++;
+    this.persistAcademiaId(academia.id);
   }
 
   /**
@@ -118,6 +144,7 @@ export class AcademiaContextService {
 
       this.academiaActual.set(data as Academia);
       this.switchCount++;
+      this.persistAcademiaId(academiaId);
       return true;
     } catch {
       return false;
@@ -142,8 +169,23 @@ export class AcademiaContextService {
       return true;
     }
 
-    // Múltiples academias: debe elegir el usuario (no auto-seleccionamos)
+    // Múltiples academias: intentar restaurar la selección previa
+    const restored = await this.tryRestoreAcademia(disponibles);
+    if (restored) return true;
+
+    // Si no se pudo restaurar, debe elegir el usuario
     return false;
+  }
+
+  /**
+   * Persiste el ID de la academia seleccionada en storage.
+   */
+  private async persistAcademiaId(id: string): Promise<void> {
+    try {
+      await this.storageService.set(ACADEMIA_CACHE_KEY, id);
+    } catch {
+      // Storage no disponible
+    }
   }
 
   /**
@@ -153,5 +195,14 @@ export class AcademiaContextService {
     this.academiaActual.set(null);
     this.academiasDisponibles.set([]);
     this.switchCount = 0;
+    this.removePersistedAcademiaId();
+  }
+
+  private async removePersistedAcademiaId(): Promise<void> {
+    try {
+      await this.storageService.remove(ACADEMIA_CACHE_KEY);
+    } catch {
+      // Storage no disponible
+    }
   }
 }
