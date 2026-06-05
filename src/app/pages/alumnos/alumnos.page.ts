@@ -47,7 +47,7 @@ import { LazyImageComponent } from '../../components/lazy-image/lazy-image.compo
 import { Alumno } from '../../interfaces/alumno.interface';
 import { AlumnosService } from '../../services/alumnos.service';
 import { AuthService } from '../../services/auth.service';
-import { CATEGORIAS } from '../../services/categoria.service';
+import { CategoriaService } from '../../services/categoria.service';
 import { CategoriaFilter } from '../../utils/categoria-filter.util';
 import { SupabaseService } from '../../services/supabase.service';
 
@@ -92,6 +92,7 @@ export class AlumnosPage implements OnInit, OnDestroy {
   private readonly alumnosService = inject(AlumnosService);
   private readonly supabaseService = inject(SupabaseService);
   readonly authService = inject(AuthService);
+  private readonly categoriaService = inject(CategoriaService);
   private readonly toastCtrl = inject(ToastController);
   private readonly alertCtrl = inject(AlertController);
   private readonly ngZone = inject(NgZone);
@@ -109,7 +110,7 @@ export class AlumnosPage implements OnInit, OnDestroy {
   loadingMore = false;
   searchTerm = '';
   categoriaFiltro = '';
-  categorias: string[] = [...CATEGORIAS];
+  categorias: string[] = [];
   /** Página actual (0-based) */
   currentPage = 0;
   /** True si ya se cargaron todos los alumnos disponibles */
@@ -130,6 +131,7 @@ export class AlumnosPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.categorias = [...this.categoriaService.getAll()];
     this.profileSub = this.authService.profile$
       .pipe(
         distinctUntilChanged(

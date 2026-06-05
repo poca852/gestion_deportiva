@@ -31,7 +31,7 @@ import { AuthService } from '../../../services/auth.service';
 import { AlumnosService } from '../../../services/alumnos.service';
 import { ConvocatoriasService } from '../../../services/convocatorias.service';
 import { Alumno } from '../../../interfaces/alumno.interface';
-import { CATEGORIAS } from '../../../services/categoria.service';
+import { CategoriaService } from '../../../services/categoria.service';
 
 @Component({
   selector: 'app-convocatoria-form',
@@ -63,6 +63,7 @@ export class ConvocatoriaFormPage implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly alumnosService = inject(AlumnosService);
   private readonly convocatoriasService = inject(ConvocatoriasService);
+  private readonly categoriaService = inject(CategoriaService);
   private readonly toastCtrl = inject(ToastController);
 
   convocatoriaId: string | null = null;
@@ -94,7 +95,7 @@ export class ConvocatoriaFormPage implements OnInit {
     this.convocatoriaId = this.route.snapshot.paramMap.get('id');
 
     if (this.authService.isAdmin()) {
-      this.categorias = [...CATEGORIAS];
+      this.categorias = [...this.categoriaService.getAll()];
     } else {
       this.categorias = [...this.authService.categoriasAsignadas()];
       if (this.categorias.length === 1) {

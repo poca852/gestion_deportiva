@@ -40,7 +40,7 @@ import { LazyImageComponent } from '../../../components/lazy-image/lazy-image.co
 import { GeneroAlumno, NivelAlumno } from '../../../interfaces/alumno.interface';
 import { AlumnosService } from '../../../services/alumnos.service';
 import { AuthService } from '../../../services/auth.service';
-import { CategoriaService, CATEGORIAS } from '../../../services/categoria.service';
+import { CategoriaService } from '../../../services/categoria.service';
 import { MediaService } from '../../../services/media.service';
 import { SupabaseService } from '../../../services/supabase.service';
 
@@ -88,7 +88,7 @@ export class AlumnoFormPage implements OnInit {
   loadingFotoEstudiante = false;
   loadingFotoDocumento = false;
   loadingFotoDocumentoPadre = false;
-  categorias: string[] = [...CATEGORIAS];
+  categorias: string[] = [];
   categoriaRecomendada = '';
   tallasCamiseta = ['6', '8', '10', '12', '14', '16', 'S', 'M', 'L'];
   fotoEstudianteFile: File | null = null;
@@ -137,11 +137,11 @@ export class AlumnoFormPage implements OnInit {
   ngOnInit(): void {
     this.alumnoId = this.route.snapshot.paramMap.get('id');
     if (this.authService.isAdmin()) {
-      this.categorias = [...CATEGORIAS];
+      this.categorias = [...this.categoriaService.getAll()];
     } else {
       const asignadas = this.authService.categoriasAsignadas();
       this.categorias =
-        asignadas.length > 0 ? [...asignadas] : [...CATEGORIAS];
+        asignadas.length > 0 ? [...asignadas] : [...this.categoriaService.getAll()];
     }
 
     if (!this.alumnoId) {

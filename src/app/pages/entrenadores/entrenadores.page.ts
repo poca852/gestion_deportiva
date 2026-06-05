@@ -47,7 +47,7 @@ import {
 } from 'ionicons/icons';
 import { EntrenadoresService } from '../../services/entrenadores.service';
 import { Entrenador } from '../../interfaces/entrenador.interface';
-import { CATEGORIAS } from '../../services/categoria.service';
+import { CategoriaService } from '../../services/categoria.service';
 
 @Component({
   selector: 'app-entrenadores',
@@ -85,6 +85,7 @@ import { CATEGORIAS } from '../../services/categoria.service';
 })
 export class EntrenadoresPage implements OnInit {
   private readonly entrenadoresService = inject(EntrenadoresService);
+  private readonly categoriaService = inject(CategoriaService);
   private readonly fb = inject(FormBuilder);
   private readonly toastCtrl = inject(ToastController);
   private readonly alertCtrl = inject(AlertController);
@@ -94,7 +95,7 @@ export class EntrenadoresPage implements OnInit {
   modalOpen = false;
   saving = false;
   editingId: string | null = null;
-  categorias: string[] = [...CATEGORIAS];
+  categorias: string[] = [];
 
   form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
@@ -119,6 +120,7 @@ export class EntrenadoresPage implements OnInit {
   }
 
   ngOnInit(): void {
+    this.categorias = [...this.categoriaService.getAll()];
     this.loadEntrenadores();
   }
 
@@ -189,7 +191,9 @@ export class EntrenadoresPage implements OnInit {
     const payload = {
       nombre: raw.nombre,
       correo: raw.correo,
-      categorias_asignadas: this.normalizeCategorias(raw.categorias_asignadas),
+      categorias_asignadas: this.categoriaService.normalizeAsignadas(
+        raw.categorias_asignadas
+      ),
       rol: raw.rol,
       password: raw.password || undefined,
     };
@@ -276,16 +280,6 @@ export class EntrenadoresPage implements OnInit {
       ],
     });
     await alert.present();
-  }
-
-  private normalizeCategorias(value: string | string[] | null | undefined): string[] {
-    if (Array.isArray(value)) {
-      return [...new Set(value.map((c) => c.trim()).filter(Boolean))];
-    }
-    if (typeof value === 'string' && value.trim()) {
-      return [value.trim()];
-    }
-    return [];
   }
 
   get selectedCategorias(): string[] {

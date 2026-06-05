@@ -34,7 +34,7 @@ import { CarnetCardComponent } from '../../components/carnet-card/carnet-card.co
 import { Alumno } from '../../interfaces/alumno.interface';
 import { AlumnosService } from '../../services/alumnos.service';
 import { AuthService } from '../../services/auth.service';
-import { CATEGORIAS } from '../../services/categoria.service';
+import { CategoriaService } from '../../services/categoria.service';
 import {
   CarnetBatchProgress,
   CarnetExportService,
@@ -72,10 +72,11 @@ export class CarnetsPage implements OnInit {
   private readonly carnetService = inject(CarnetService);
   private readonly exportService = inject(CarnetExportService);
   private readonly authService = inject(AuthService);
+  private readonly categoriaService = inject(CategoriaService);
   private readonly toastCtrl = inject(ToastController);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  categoriasOptions: string[] = [...CATEGORIAS];
+  categoriasOptions: string[] = [];
   alumnos: Alumno[] = [];
   renderData: CarnetData | null = null;
 
@@ -109,6 +110,7 @@ export class CarnetsPage implements OnInit {
   }
 
   ngOnInit(): void {
+    this.categoriasOptions = [...this.categoriaService.getAll()];
     void this.cargarAlumnos();
   }
 

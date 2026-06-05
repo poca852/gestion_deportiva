@@ -1,4 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.2';
+import {
+  validateCategoriasAsignadas,
+} from '../_shared/categorias.ts';
 
 type RolEntrenador = 'admin' | 'coach';
 
@@ -25,13 +28,6 @@ function jsonResponse(status: number, body: Record<string, unknown>): Response {
       'Content-Type': 'application/json',
     },
   });
-}
-
-function normalizeCategorias(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return [...new Set(value.map((c) => String(c).trim()).filter(Boolean))];
 }
 
 Deno.serve(async (req) => {
@@ -115,7 +111,14 @@ Deno.serve(async (req) => {
   const correo = payload.correo?.trim().toLowerCase();
   const password = payload.password?.trim();
   const rol: RolEntrenador = payload.rol === 'admin' ? 'admin' : 'coach';
-  const categoriasAsignadas = normalizeCategorias(payload.categorias_asignadas);
+  const { valid: categoriasAsignadas, invalid: categoriasInvalidas } =
+    validateCategoriasAsignadas(payload.categorias_asignadas);
+
+  if (categoriasInvalidas.length > 0) {
+    return jsonResponse(400, {
+      error: `Categorías no válidas: ${categoriasInvalidas.join(', ')}`,
+    });
+  }
 
   // Determinar academia_id:
   // - El super_admin puede especificarlo o no

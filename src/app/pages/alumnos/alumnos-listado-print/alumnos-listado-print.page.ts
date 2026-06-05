@@ -35,7 +35,7 @@ import { AcademiaBrandingService } from '../../../services/academia-branding.ser
 import { AcademiaContextService } from '../../../services/academia-context.service';
 import { AlumnosService } from '../../../services/alumnos.service';
 import { AuthService } from '../../../services/auth.service';
-import { CATEGORIAS } from '../../../services/categoria.service';
+import { CategoriaService } from '../../../services/categoria.service';
 import { ConvocatoriaExportService } from '../../../services/convocatoria-export.service';
 import { SupabaseService } from '../../../services/supabase.service';
 import { CategoriaFilter } from '../../../utils/categoria-filter.util';
@@ -73,6 +73,7 @@ export class AlumnosListadoPrintPage implements OnInit {
   private readonly academiaContext = inject(AcademiaContextService);
   private readonly supabaseService = inject(SupabaseService);
   private readonly authService = inject(AuthService);
+  private readonly categoriaService = inject(CategoriaService);
   private readonly exportService = inject(ConvocatoriaExportService);
   private readonly branding = inject(AcademiaBrandingService);
   private readonly toastCtrl = inject(ToastController);
@@ -91,7 +92,7 @@ export class AlumnosListadoPrintPage implements OnInit {
   exporting = false;
   savingFirma = false;
 
-  categoriasOptions: string[] = [...CATEGORIAS];
+  categoriasOptions: string[] = [];
 
   form = this.fb.nonNullable.group({
     categorias: [[] as string[]],
@@ -129,10 +130,11 @@ export class AlumnosListadoPrintPage implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.isAdmin()) {
-      this.categoriasOptions = [...CATEGORIAS];
+      this.categoriasOptions = [...this.categoriaService.getAll()];
     } else {
       const asignadas = this.authService.categoriasAsignadas();
-      this.categoriasOptions = asignadas.length > 0 ? [...asignadas] : [...CATEGORIAS];
+      this.categoriasOptions =
+        asignadas.length > 0 ? [...asignadas] : [...this.categoriaService.getAll()];
     }
 
     const academia = this.academiaContext.academiaActual();

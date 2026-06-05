@@ -3,6 +3,7 @@ import { from, Observable } from 'rxjs';
 import { SupabaseService } from './supabase.service';
 import { AcademiaContextService } from './academia-context.service';
 import { Entrenador, EntrenadorForm } from '../interfaces/entrenador.interface';
+import { mapCategoriaConstraintError } from '../utils/categoria-error.util';
 
 @Injectable({
   providedIn: 'root',
@@ -201,6 +202,11 @@ export class EntrenadoresService {
       message.includes('user not allowed')
     ) {
       return new Error('Solo un administrador puede crear entrenadores.');
+    }
+
+    const categoriaError = mapCategoriaConstraintError(rawMessage);
+    if (categoriaError) {
+      return new Error(categoriaError);
     }
 
     if (
