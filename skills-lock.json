@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "capacitor-angular": {
+      "source": "capawesome-team/skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-angular/SKILL.md",
+      "computedHash": "a2f1a4435bdfdd40589b131359eb9087b1a1c92d4024900bb0569e19aaf4792e"
+    },
+    "capacitor-app-development": {
+      "source": "capawesome-team/skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-app-development/SKILL.md",
+      "computedHash": "d991f389c059e722a2dbd0cfcd0ac6dcf9682ff017e8d812d290540c2a236eed"
+    },
+    "capacitor-plugins": {
+      "source": "capawesome-team/skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-plugins/SKILL.md",
+      "computedHash": "7c988e487ec0524bf8c937d7d3178075a5889fb08d4dca40b4cd9eddbd5cf6a2"
+    },
+    "ionic-angular": {
+      "source": "capawesome-team/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-angular/SKILL.md",
+      "computedHash": "b54258cdbf0810b2d6e60fbdf546575cbf729eff87c7378af74d445528e8647d"
+    }
+  }
+}
