@@ -1,0 +1,231 @@
+$white: #ffffff;
+$text-dark: #1a1a2e;
+$text-muted: #555555;
+$orange: #e85d04;
+$orange-light: #f48c06;
+$red: #dc2f02;
+$red-dark: #9d0208;
+
+.carnet {
+  width: 638px;
+  height: 1011px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 12px;
+  overflow: hidden;
+  background: $white;
+  color: $text-dark;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    border: 2px solid rgba(0, 0, 0, 0.06);
+    pointer-events: none;
+    z-index: 20;
+  }
+
+  &.carnet--flat {
+    box-shadow: none;
+  }
+}
+
+.carnet-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: $white;
+
+  .bg-stripe--tr {
+    position: absolute;
+    top: -40px;
+    right: -60px;
+    width: 220px;
+    height: 500px;
+    background: linear-gradient(160deg, $orange 0%, $red 100%);
+    transform: rotate(30deg);
+    opacity: 0.18;
+    pointer-events: none;
+  }
+
+  .bg-stripe--bl {
+    position: absolute;
+    bottom: 80px;
+    left: -80px;
+    width: 180px;
+    height: 400px;
+    background: linear-gradient(200deg, $orange-light 0%, $orange 100%);
+    transform: rotate(-25deg);
+    opacity: 0.14;
+    pointer-events: none;
+  }
+
+  .bg-stripe--mid {
+    position: absolute;
+    top: 50%;
+    right: -100px;
+    width: 160px;
+    height: 300px;
+    background: linear-gradient(180deg, $red 0%, $red-dark 100%);
+    transform: rotate(15deg) translateY(-50%);
+    opacity: 0.08;
+    pointer-events: none;
+  }
+}
+
+.carnet-bg-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  max-width: 540px;
+  height: auto;
+  max-height: 75%;
+  object-fit: contain;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.carnet-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+  padding: 8px 28px 12px;
+  min-height: 0;
+}
+
+.carnet-foto-wrapper {
+  flex-shrink: 0;
+}
+
+.carnet-foto-ring {
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  padding: 5px;
+  background: linear-gradient(135deg, $orange-light 0%, $orange 40%, $red 70%, $red-dark 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba($red, 0.25);
+}
+
+.carnet-foto {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carnet-foto-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carnet-foto-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e8e8e8, #d0d0d0);
+}
+
+.carnet-foto-icon {
+  font-size: 80px;
+  color: #aaa;
+}
+
+.carnet-categoria {
+  font-size: 24px;
+  font-weight: 700;
+  color: $red;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: inline-block;
+  line-height: 1;
+  flex-shrink: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.carnet-nombre {
+  font-size: 34px;
+  font-weight: 800;
+  color: $text-dark;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.2;
+  padding: 0 16px;
+  flex-shrink: 0;
+  word-break: break-word;
+  width: 100%;
+}
+
+.carnet-qr-wrapper {
+  width: 230px;
+  height: 230px;
+  flex-shrink: 0;
+  padding: 10px;
+  background: $white;
+  border: 2px solid rgba($orange, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.carnet-qr-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.carnet-fecha {
+  font-size: 18px;
+  font-weight: 600;
+  color: $text-muted;
+  text-align: center;
+  width: 100%;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+.carnet-footer {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 22px 0;
+  text-align: center;
+  background: linear-gradient(90deg, $red-dark 0%, $red 50%, $orange 100%);
+  flex-shrink: 0;
+}
+
+.carnet-footer-text {
+  font-size: 18px;
+  font-weight: 800;
+  color: $white;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}

@@ -1,0 +1,52 @@
+<div #carnetRoot class="carnet" [class.carnet--flat]="flat">
+  <div class="carnet-bg">
+    <div class="bg-stripe bg-stripe--tr"></div>
+    <div class="bg-stripe bg-stripe--bl"></div>
+    <div class="bg-stripe bg-stripe--mid"></div>
+    @if (carnetData.logoDataUrl) {
+      <img
+        [src]="carnetData.logoDataUrl"
+        alt=""
+        class="carnet-bg-logo"
+        aria-hidden="true"
+      />
+    }
+  </div>
+
+  <div class="carnet-body">
+    <div class="carnet-foto-wrapper">
+      <div class="carnet-foto-ring">
+        <div class="carnet-foto">
+          @if (carnetData.fotoDataUrl) {
+            <img
+              [src]="carnetData.fotoDataUrl"
+              [alt]="'Foto de ' + carnetData.nombreCompleto"
+              class="carnet-foto-img"
+            />
+          } @else {
+            <div class="carnet-foto-placeholder">
+              <ion-icon name="person-outline" class="carnet-foto-icon"></ion-icon>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="carnet-categoria">{{ carnetData.alumno.categoria }}</div>
+    <div class="carnet-nombre">{{ carnetData.nombreCompleto }}</div>
+
+    <div class="carnet-qr-wrapper">
+      <img [src]="carnetData.qrDataUrl" alt="Código QR" class="carnet-qr-img" />
+    </div>
+
+    <div class="carnet-fecha">
+      F. NACIMIENTO: {{ formatFecha(carnetData.alumno.fecha_nacimiento) }}
+    </div>
+  </div>
+
+  @if (carnetData.nombreAcademia) {
+    <div class="carnet-footer">
+      <span class="carnet-footer-text">{{ carnetData.nombreAcademia }}</span>
+    </div>
+  }
+</div>
