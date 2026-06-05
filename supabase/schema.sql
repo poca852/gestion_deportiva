@@ -151,6 +151,7 @@ IMMUTABLE
 PARALLEL SAFE
 AS $$
   SELECT ARRAY[
+    'Mosquito',
     'U8',
     'U10',
     'U12',

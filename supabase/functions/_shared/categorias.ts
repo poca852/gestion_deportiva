@@ -4,6 +4,7 @@
  * Mantener sincronizado con la migración SQL `categorias_catalogo_validacion`.
  */
 export const CATEGORIA_CATALOG = [
+  { id: 'Mosquito', maxAge: 6, porEdad: true },
   { id: 'U8', maxAge: 8, porEdad: true },
   { id: 'U10', maxAge: 10, porEdad: true },
   { id: 'U12', maxAge: 12, porEdad: true },
