@@ -1,6 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   IonBackButton,
   IonButton,
@@ -30,12 +29,12 @@ import {
   calendarOutline,
   createOutline,
   documentOutline,
-  downloadOutline,
   peopleOutline,
   personOutline,
 } from 'ionicons/icons';
 import { forkJoin } from 'rxjs';
 import { LazyImageComponent } from '../../../components/lazy-image/lazy-image.component';
+import { PdfViewerComponent } from '../../../components/pdf-viewer/pdf-viewer.component';
 import { Alumno, GeneroAlumno, NivelAlumno } from '../../../interfaces/alumno.interface';
 import { Convocatoria } from '../../../interfaces/convocatoria.interface';
 import { AlumnosService } from '../../../services/alumnos.service';
@@ -69,6 +68,7 @@ import { MayusculasPipe } from '../../../pipes/mayusculas.pipe';
     IonLabel,
     IonNote,
     LazyImageComponent,
+    PdfViewerComponent,
     MayusculasPipe,
   ],
 })
@@ -76,7 +76,6 @@ export class AlumnoDetallePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly alumnosService = inject(AlumnosService);
   private readonly supabaseService = inject(SupabaseService);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly toastCtrl = inject(ToastController);
 
   alumno: Alumno | null = null;
@@ -86,7 +85,6 @@ export class AlumnoDetallePage implements OnInit {
   loadingFotoEstudiante = false;
   loadingDocumento = false;
   loadingDocumentoPadre = false;
-  descargandoDocumento = false;
   fotoEstudianteUrl: string | null = null;
   documentoUrl: string | null = null;
   documentoPadreUrl: string | null = null;
@@ -96,12 +94,11 @@ export class AlumnoDetallePage implements OnInit {
   constructor() {
     addIcons({
       callOutline,
+      calendarOutline,
       createOutline,
       documentOutline,
-      downloadOutline,
       personOutline,
       peopleOutline,
-      calendarOutline,
       basketballOutline,
     });
   }
@@ -138,20 +135,6 @@ export class AlumnoDetallePage implements OnInit {
         await toast.present();
       },
     });
-  }
-
-  get documentoPdfUrl(): SafeResourceUrl | null {
-    if (!this.documentoUrl || !this.documentoEsPdf) {
-      return null;
-    }
-    return this.sanitizer.bypassSecurityTrustResourceUrl(this.documentoUrl);
-  }
-
-  get documentoPadrePdfUrl(): SafeResourceUrl | null {
-    if (!this.documentoPadreUrl || !this.documentoPadreEsPdf) {
-      return null;
-    }
-    return this.sanitizer.bypassSecurityTrustResourceUrl(this.documentoPadreUrl);
   }
 
   get nombreCompleto(): string {
@@ -210,72 +193,6 @@ export class AlumnoDetallePage implements OnInit {
       otro: 'Otro',
     };
     return labels[genero];
-  }
-
-  async descargarDocumento(): Promise<void> {
-    if (!this.alumno?.foto_documento_url || this.descargandoDocumento) {
-      return;
-    }
-
-    this.descargandoDocumento = true;
-    const path = this.supabaseService.extractStoragePath(
-      this.alumno.foto_documento_url
-    );
-    const extension =
-      path?.split('.').pop()?.toLowerCase() ??
-      (this.documentoEsPdf ? 'pdf' : 'jpg');
-    const filename = `documento-${this.alumno.apellidos}-${this.alumno.nombres}.${extension}`
-      .replace(/\s+/g, '-')
-      .toLowerCase();
-
-    try {
-      await this.supabaseService.downloadExpediente(
-        this.alumno.foto_documento_url,
-        filename
-      );
-    } catch (err) {
-      const toast = await this.toastCtrl.create({
-        message: (err as Error).message,
-        duration: 3000,
-        color: 'danger',
-      });
-      await toast.present();
-    } finally {
-      this.descargandoDocumento = false;
-    }
-  }
-
-  async descargarDocumentoPadre(): Promise<void> {
-    if (!this.alumno?.foto_documento_padre_url || this.descargandoDocumento) {
-      return;
-    }
-
-    this.descargandoDocumento = true;
-    const path = this.supabaseService.extractStoragePath(
-      this.alumno.foto_documento_padre_url
-    );
-    const extension =
-      path?.split('.').pop()?.toLowerCase() ??
-      (this.documentoPadreEsPdf ? 'pdf' : 'jpg');
-    const filename = `documento-padre-${this.alumno.apellidos}-${this.alumno.nombres}.${extension}`
-      .replace(/\s+/g, '-')
-      .toLowerCase();
-
-    try {
-      await this.supabaseService.downloadExpediente(
-        this.alumno.foto_documento_padre_url,
-        filename
-      );
-    } catch (err) {
-      const toast = await this.toastCtrl.create({
-        message: (err as Error).message,
-        duration: 3000,
-        color: 'danger',
-      });
-      await toast.present();
-    } finally {
-      this.descargandoDocumento = false;
-    }
   }
 
   private async cargarArchivos(alumno: Alumno): Promise<void> {

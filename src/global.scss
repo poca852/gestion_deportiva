@@ -40,8 +40,15 @@
 // Utilidades globales
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// FAB (botón flotante) — safe area para no quedar tapado por nav bar de Android
+// ---------------------------------------------------------------------------
 ion-content.has-fab {
-  --padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  --padding-bottom: 96px;
+}
+
+ion-fab[slot="fixed"] {
+  margin-bottom: calc(16px + env(safe-area-inset-bottom, 16px));
 }
 
 .loading-center {
