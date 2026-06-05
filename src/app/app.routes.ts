@@ -95,6 +95,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'alumnos/carnet/:id',
+        loadComponent: () =>
+          import('./pages/alumnos/carnet/carnet.page').then(
+            (m) => m.CarnetPage
+          ),
+      },
+      {
+        path: 'carnets',
+        loadComponent: () =>
+          import('./pages/carnets/carnets.page').then((m) => m.CarnetsPage),
+      },
+      {
         path: 'convocatorias',
         loadComponent: () =>
           import('./pages/convocatorias/convocatorias.page').then(

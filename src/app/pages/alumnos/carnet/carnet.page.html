@@ -1,0 +1,81 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/app/alumnos" text="Volver"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Carnet del alumno</ion-title>
+    @if (carnetData && !loading) {
+      <ion-buttons slot="end">
+        <ion-button
+          (click)="compartirCarnet()"
+          [disabled]="downloading || sharing"
+          aria-label="Compartir carnet"
+        >
+          @if (sharing) {
+            <ion-spinner name="crescent" slot="icon-only"></ion-spinner>
+          } @else {
+            <ion-icon name="share-outline" slot="icon-only"></ion-icon>
+          }
+        </ion-button>
+        <ion-button
+          (click)="descargarCarnet()"
+          [disabled]="downloading || sharing"
+          aria-label="Descargar carnet"
+        >
+          @if (downloading) {
+            <ion-spinner name="crescent" slot="icon-only"></ion-spinner>
+          } @else {
+            <ion-icon name="cloud-download-outline" slot="icon-only"></ion-icon>
+          }
+        </ion-button>
+      </ion-buttons>
+    }
+  </ion-toolbar>
+</ion-header>
+
+@if (exportando) {
+  <div class="export-feedback" role="status" aria-live="polite">
+    <ion-spinner name="crescent" class="export-feedback-spinner"></ion-spinner>
+    <p class="export-feedback-text">{{ mensajeExportacion }}</p>
+  </div>
+}
+
+<ion-content class="carnet-content">
+  @if (loading) {
+    <div class="loading-center">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+  } @else if (carnetData) {
+    <div class="carnet-screen-wrapper">
+      <p class="carnet-preview-hint">Desliza para ver el carnet completo</p>
+
+      <div #previewViewport class="carnet-preview-viewport">
+        <div
+          class="carnet-visual-wrapper"
+          [style.width.px]="previewBoxWidth"
+          [style.height.px]="previewBoxHeight"
+        >
+          <div
+            class="carnet-scale-inner"
+            [style.transform]="'scale(' + previewScale + ')'"
+          >
+            <app-carnet-card #carnetCard [carnetData]="carnetData" />
+          </div>
+        </div>
+      </div>
+
+      <p class="carnet-info-text">
+        Vista previa adaptada a tu pantalla. El archivo descargado mantiene
+        tamaño ID-1 (53.98mm × 85.60mm) a 300 DPI (638 × 1011 px).
+      </p>
+    </div>
+  } @else if (error) {
+    <div class="error-center">
+      <p>No se pudo cargar la información del alumno.</p>
+      <ion-button routerLink="/app/alumnos" color="primary" fill="outline">
+        <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+        Volver a alumnos
+      </ion-button>
+    </div>
+  }
+</ion-content>

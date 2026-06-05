@@ -6,6 +6,9 @@
     <ion-title>Detalle del alumno</ion-title>
     @if (alumno) {
       <ion-buttons slot="end">
+        <ion-button [routerLink]="['/app/alumnos/carnet', alumno.id]" aria-label="Ver carnet">
+          <ion-icon name="id-card-outline" slot="icon-only"></ion-icon>
+        </ion-button>
         <ion-button [routerLink]="['/app/alumnos/editar', alumno.id]" aria-label="Editar alumno">
           <ion-icon name="create-outline" slot="icon-only"></ion-icon>
         </ion-button>

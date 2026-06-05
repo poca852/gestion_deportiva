@@ -34,6 +34,7 @@ import {
   createOutline,
   documentTextOutline,
   eyeOutline,
+  idCardOutline,
   peopleOutline,
   trashOutline,
 } from 'ionicons/icons';
@@ -117,7 +118,15 @@ export class AlumnosPage implements OnInit, OnDestroy {
   private listLoadId = 0;
 
   constructor() {
-    addIcons({ addOutline, createOutline, eyeOutline, trashOutline, documentTextOutline, peopleOutline });
+    addIcons({
+      addOutline,
+      createOutline,
+      eyeOutline,
+      trashOutline,
+      documentTextOutline,
+      idCardOutline,
+      peopleOutline,
+    });
   }
 
   ngOnInit(): void {

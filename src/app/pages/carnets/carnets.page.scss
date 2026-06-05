@@ -1,0 +1,141 @@
+.config-section {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .config-header {
+    h2 {
+      margin: 0 0 4px;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--ion-color-medium);
+    }
+  }
+}
+
+.input-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--app-surface-elevated);
+  border-radius: var(--app-radius-md);
+  padding: 14px 16px;
+  border: 1px solid var(--app-border-color);
+}
+
+.input-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--ion-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon {
+    font-size: 20px;
+    color: #fff;
+  }
+}
+
+.input-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.input-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ion-color-medium);
+}
+
+.input-hint {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.export-feedback {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: all;
+  padding: 0 32px;
+}
+
+.export-feedback-spinner {
+  width: 52px;
+  height: 52px;
+  --color: #ffffff;
+}
+
+.export-feedback-text {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.4;
+}
+
+ion-progress-bar {
+  width: min(280px, 80vw);
+  --progress-background: rgba(255, 255, 255, 0.25);
+  --background: rgba(255, 255, 255, 0.15);
+}
+
+.resumen-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--app-radius-md);
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
+  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.15);
+
+  ion-icon {
+    font-size: 28px;
+    color: var(--ion-color-primary);
+  }
+
+  strong {
+    font-size: 1.1rem;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.carnet-render-host {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 638px;
+  height: 1011px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  z-index: -1;
+}

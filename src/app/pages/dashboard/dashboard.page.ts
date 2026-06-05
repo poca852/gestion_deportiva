@@ -20,6 +20,7 @@ import {
   calendarOutline,
   chevronForwardOutline,
   documentTextOutline,
+  idCardOutline,
   peopleOutline,
   personOutline,
   personAddOutline,
@@ -87,7 +88,17 @@ export class DashboardPage implements OnInit, OnDestroy {
   private statsLoadId = 0;
 
   constructor() {
-    addIcons({ analyticsOutline, personOutline, calendarOutline, peopleOutline, personAddOutline, documentTextOutline, addOutline, chevronForwardOutline });
+    addIcons({
+      analyticsOutline,
+      personOutline,
+      calendarOutline,
+      peopleOutline,
+      personAddOutline,
+      documentTextOutline,
+      idCardOutline,
+      addOutline,
+      chevronForwardOutline,
+    });
   }
 
   private buildQuickActions(): void {
@@ -112,6 +123,13 @@ export class DashboardPage implements OnInit, OnDestroy {
         icon: 'document-text-outline',
         url: '/app/alumnos/listado-print',
         color: 'tertiary',
+      },
+      {
+        title: 'Carnets en masa',
+        subtitle: 'Generar carnets por categoría',
+        icon: 'id-card-outline',
+        url: '/app/carnets',
+        color: 'success',
       },
       ...(this.isAdmin
         ? [

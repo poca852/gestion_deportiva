@@ -1,0 +1,101 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/app/alumnos"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Carnets</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+@if (generando) {
+  <div class="export-feedback" role="status" aria-live="polite">
+    <ion-spinner name="crescent" class="export-feedback-spinner"></ion-spinner>
+    <p class="export-feedback-text">{{ mensajeProgreso }}</p>
+    @if (progresoTotal > 0) {
+      <ion-progress-bar [value]="progresoValor"></ion-progress-bar>
+    }
+  </div>
+}
+
+<ion-content>
+  <section class="config-section">
+    <div class="config-header">
+      <h2>Generar carnets en masa</h2>
+      <p>Selecciona las categorías y descarga todos los carnets en un archivo ZIP.</p>
+    </div>
+
+    <form [formGroup]="form">
+      <div class="input-card">
+        <div class="input-icon">
+          <ion-icon name="filter-outline"></ion-icon>
+        </div>
+        <div class="input-body">
+          <label class="input-label">Categorías</label>
+          <ion-select
+            formControlName="categorias"
+            multiple="true"
+            interface="action-sheet"
+            placeholder="Seleccionar categorías"
+          >
+            @for (cat of categoriasOptions; track cat) {
+              <ion-select-option [value]="cat">{{ cat }}</ion-select-option>
+            }
+          </ion-select>
+          @if (categoriasSeleccionadas.length === 0) {
+            <span class="input-hint">Ninguna seleccionada = todas las categorías</span>
+          } @else {
+            <span class="input-hint">
+              {{ categoriasSeleccionadas.length }} seleccionada{{ categoriasSeleccionadas.length !== 1 ? 's' : '' }}
+            </span>
+          }
+        </div>
+      </div>
+    </form>
+
+    <ion-button expand="block" (click)="cargarAlumnos()" [disabled]="loadingAlumnos || generando">
+      @if (loadingAlumnos) {
+        <ion-spinner name="crescent" slot="start"></ion-spinner>
+        Cargando alumnos...
+      } @else {
+        <ion-icon name="people-outline" slot="start"></ion-icon>
+        Cargar alumnos
+      }
+    </ion-button>
+
+    @if (alumnos.length > 0) {
+      <div class="resumen-card">
+        <ion-icon name="id-card-outline"></ion-icon>
+        <div>
+          <strong>{{ alumnos.length }}</strong> carnet{{ alumnos.length !== 1 ? 's' : '' }} listo{{ alumnos.length !== 1 ? 's' : '' }} para generar
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <ion-button
+          expand="block"
+          (click)="descargarZip()"
+          [disabled]="generando"
+        >
+          <ion-icon name="cloud-download-outline" slot="start"></ion-icon>
+          Descargar ZIP
+        </ion-button>
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="compartirZip()"
+          [disabled]="generando"
+        >
+          <ion-icon name="share-outline" slot="start"></ion-icon>
+          Compartir ZIP
+        </ion-button>
+      </div>
+    }
+  </section>
+
+  <!-- Renderizador oculto: reutiliza la misma plantilla del carnet individual -->
+  <div class="carnet-render-host" aria-hidden="true">
+    @if (renderData) {
+      <app-carnet-card #renderCard [carnetData]="renderData" [flat]="true" />
+    }
+  </div>
+</ion-content>
