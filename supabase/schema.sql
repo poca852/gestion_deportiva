@@ -144,6 +144,43 @@ ALTER TABLE public.convocatorias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.alumnos_convocatoria ENABLE ROW LEVEL SECURITY;
 
 -- Helpers RLS
+CREATE OR REPLACE FUNCTION public.categorias_validas()
+RETURNS TEXT[]
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+  SELECT ARRAY[
+    'U8',
+    'U10',
+    'U12',
+    'U14',
+    'U16',
+    'U18',
+    'U20',
+    'Senior',
+    'Libre'
+  ]::TEXT[];
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_categoria_valida(p_categoria TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+  SELECT p_categoria = ANY(public.categorias_validas());
+$$;
+
+CREATE OR REPLACE FUNCTION public.are_categorias_asignadas_validas(p_categorias TEXT[])
+RETURNS BOOLEAN
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+  SELECT COALESCE(p_categorias, '{}'::TEXT[]) <@ public.categorias_validas();
+$$;
+
 CREATE OR REPLACE FUNCTION public.get_user_rol()
 RETURNS rol_entrenador AS $$
   SELECT rol FROM public.entrenadores WHERE id = auth.uid();
@@ -234,6 +271,13 @@ REVOKE EXECUTE ON FUNCTION public.user_has_categoria() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_user_rol() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_user_categorias() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.user_has_categoria() TO authenticated;
+
+REVOKE ALL ON FUNCTION public.categorias_validas() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.is_categoria_valida(TEXT) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.are_categorias_asignadas_validas(TEXT[]) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.categorias_validas() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_categoria_valida(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.are_categorias_asignadas_validas(TEXT[]) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.get_user_es_super_admin() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_user_es_super_admin() TO authenticated;
