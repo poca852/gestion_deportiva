@@ -19,6 +19,7 @@ import {
 import { addIcons } from 'ionicons';
 import { lockClosedOutline, mailOutline, shieldCheckmarkOutline, trophyOutline } from 'ionicons/icons';
 import { AuthService } from '../../services/auth.service';
+import { emailValidator } from '../../utils/email-validation.util';
 
 @Component({
   selector: 'app-login',
@@ -47,7 +48,7 @@ export class LoginPage {
   errorMessage = '';
 
   form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.required, emailValidator()]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 

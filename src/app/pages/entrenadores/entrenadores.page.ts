@@ -46,6 +46,7 @@ import {
   trashOutline,
 } from 'ionicons/icons';
 import { EntrenadoresService } from '../../services/entrenadores.service';
+import { emailValidator } from '../../utils/email-validation.util';
 import { Entrenador } from '../../interfaces/entrenador.interface';
 import { CategoriaService } from '../../services/categoria.service';
 
@@ -99,7 +100,7 @@ export class EntrenadoresPage implements OnInit {
 
   form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
-    correo: ['', [Validators.required, Validators.email]],
+    correo: ['', [Validators.required, emailValidator()]],
     categorias_asignadas: [[] as string[]],
     rol: ['coach' as 'admin' | 'coach', Validators.required],
     password: [''],

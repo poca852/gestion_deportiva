@@ -34,6 +34,7 @@ import {
 import { Academia } from '../../../interfaces/academia.interface';
 import { environment } from '../../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
+import { isValidEmail } from '../../../utils/email-validation.util';
 
 @Component({
   selector: 'app-usuario-form',
@@ -88,17 +89,25 @@ import { firstValueFrom } from 'rxjs';
             ></ion-input>
           </ion-item>
 
-          <ion-item>
+          <ion-item [class.field-error]="correoTocado && correoInvalido">
             <ion-label position="stacked" color="primary"
-              >Correo electrónico</ion-label
+              >Correo electrónico *</ion-label
             >
             <ion-input
               [(ngModel)]="form.correo"
               type="email"
               placeholder="correo@ejemplo.com"
               [disabled]="esEdicion"
+              (ionBlur)="correoTocado = true"
             ></ion-input>
           </ion-item>
+          @if (correoTocado && correoInvalido) {
+            <ion-text color="danger">
+              <p class="field-error-text">
+                {{ !form.correo.trim() ? 'El correo es obligatorio' : 'Ingresa un correo válido' }}
+              </p>
+            </ion-text>
+          }
 
           @if (!esEdicion) {
             <ion-item>
@@ -161,7 +170,7 @@ import { firstValueFrom } from 'rxjs';
           <ion-button
             expand="block"
             (click)="guardar()"
-            [disabled]="guardando || !form.nombre.trim()"
+            [disabled]="guardando || !puedeGuardar()"
           >
             @if (guardando) {
               <ion-spinner name="crescent" slot="start"></ion-spinner>
@@ -232,7 +241,22 @@ export class UsuarioFormPage implements OnInit {
   guardando = false;
   cargandoDatos = false;
   reseteandoPassword = false;
+  correoTocado = false;
   error = '';
+
+  get correoInvalido(): boolean {
+    return !this.form.correo.trim() || !isValidEmail(this.form.correo);
+  }
+
+  puedeGuardar(): boolean {
+    if (!this.form.nombre.trim()) {
+      return false;
+    }
+    if (!this.esEdicion && this.correoInvalido) {
+      return false;
+    }
+    return true;
+  }
 
   constructor() {
     addIcons({ saveOutline, keyOutline, sendOutline, lockClosedOutline });
@@ -284,7 +308,10 @@ export class UsuarioFormPage implements OnInit {
   }
 
   async guardar(): Promise<void> {
-    if (this.guardando || !this.form.nombre.trim()) {
+    if (this.guardando || !this.puedeGuardar()) {
+      if (!this.esEdicion) {
+        this.correoTocado = true;
+      }
       return;
     }
 
@@ -336,6 +363,9 @@ export class UsuarioFormPage implements OnInit {
         if (!this.form.correo.trim()) {
           throw new Error('El correo es obligatorio');
         }
+        if (!isValidEmail(this.form.correo)) {
+          throw new Error('Ingresa un correo válido');
+        }
 
         const nuevoUsuario = await firstValueFrom(
           this.entrenadoresService.create({
@@ -375,7 +405,10 @@ export class UsuarioFormPage implements OnInit {
   }
 
   async restablecerPassword(): Promise<void> {
-    if (!this.form.correo) return;
+    if (!this.form.correo || !isValidEmail(this.form.correo)) {
+      await this.mostrarToast('Ingresa un correo válido', 'danger');
+      return;
+    }
 
     this.reseteandoPassword = true;
     try {
