@@ -124,27 +124,31 @@
             <ion-icon name="camera-outline"></ion-icon>
             Foto del estudiante
           </label>
-          <div class="file-upload-area">
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              (change)="onFileSelected($event, 'estudiante')"
-              class="file-input"
-              id="file-estudiante"
-            />
-            <label for="file-estudiante" class="file-dropzone">
-              <ion-icon name="cloud-upload-outline" class="upload-icon"></ion-icon>
-              <span>Seleccionar foto</span>
-            </label>
+          <div class="media-actions">
+            <button type="button" class="media-btn media-btn--primary" (click)="takeStudentPhoto()">
+              <ion-icon name="camera-outline"></ion-icon>
+              <span>Tomar foto</span>
+            </button>
+            <button type="button" class="media-btn media-btn--secondary" (click)="pickStudentFromGallery()">
+              <ion-icon name="images-outline"></ion-icon>
+              <span>Galería</span>
+            </button>
           </div>
-          @if (fotoEstudiantePreview || loadingFotoEstudiante) {
-            <div class="preview-frame">
-              <app-lazy-image
-                [src]="fotoEstudiantePreview"
-                [loading]="loadingFotoEstudiante"
-                alt="Vista previa del estudiante"
-                objectFit="cover"
-              />
+          @if (fotoEstudianteFile || form.controls.foto_estudiante_url.value) {
+            <div class="file-status">
+              <div class="preview-frame">
+                <app-lazy-image
+                  [src]="fotoEstudiantePreview"
+                  [loading]="loadingFotoEstudiante"
+                  alt="Vista previa del estudiante"
+                  objectFit="cover"
+                />
+              </div>
+              @if (fotoEstudianteFile) {
+                <button type="button" class="remove-btn" (click)="removeFile('estudiante')" aria-label="Quitar foto">
+                  <ion-icon name="close-circle"></ion-icon>
+                </button>
+              }
             </div>
           }
         </div>
@@ -154,41 +158,48 @@
           <label class="file-label">
             <ion-icon name="document-outline"></ion-icon>
             Partida de nacimiento
+            <span class="opcional">(PDF requerido)</span>
           </label>
-          <div class="file-upload-area">
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              (change)="onFileSelected($event, 'documento')"
-              class="file-input"
-              id="file-documento"
-            />
-            <label for="file-documento" class="file-dropzone">
-              <ion-icon name="cloud-upload-outline" class="upload-icon"></ion-icon>
-              <span>Seleccionar archivo</span>
-            </label>
+          <div class="media-actions">
+            <button type="button" class="media-btn media-btn--primary" (click)="pickBirthCertificatePdf()">
+              <ion-icon name="document-text-outline"></ion-icon>
+              <span>Seleccionar PDF</span>
+            </button>
+            <button type="button" class="media-btn media-btn--secondary" (click)="takeBirthCertificatePhoto()">
+              <ion-icon name="camera-outline"></ion-icon>
+              <span>Fotografiar</span>
+            </button>
           </div>
-          @if (documentoEsPdf && (fotoDocumentoFile || form.controls.foto_documento_url.value)) {
-            <div class="pdf-info">
-              <div class="pdf-badge">
-                <ion-icon name="document-text-outline"></ion-icon>
-                Documento PDF
-              </div>
-              @if (fotoDocumentoPreview && !fotoDocumentoFile) {
-                <a [href]="fotoDocumentoPreview" target="_blank" class="pdf-action-link">
-                  <ion-icon name="open-outline"></ion-icon>
-                  Ver archivo
-                </a>
+          @if (fotoDocumentoFile || form.controls.foto_documento_url.value) {
+            <div class="file-status">
+              @if (documentoEsPdf) {
+                <div class="pdf-info">
+                  <div class="pdf-badge">
+                    <ion-icon name="document-text-outline"></ion-icon>
+                    Documento PDF
+                  </div>
+                  @if (fotoDocumentoPreview && !fotoDocumentoFile) {
+                    <a [href]="fotoDocumentoPreview" target="_blank" class="pdf-action-link">
+                      <ion-icon name="open-outline"></ion-icon>
+                      Ver archivo
+                    </a>
+                  }
+                </div>
+              } @else {
+                <div class="preview-frame">
+                  <app-lazy-image
+                    [src]="fotoDocumentoPreview"
+                    [loading]="loadingFotoDocumento"
+                    alt="Vista previa del documento"
+                    objectFit="contain"
+                  />
+                </div>
               }
-            </div>
-          } @else if (fotoDocumentoPreview || loadingFotoDocumento) {
-            <div class="preview-frame">
-              <app-lazy-image
-                [src]="fotoDocumentoPreview"
-                [loading]="loadingFotoDocumento"
-                alt="Vista previa del documento"
-                objectFit="contain"
-              />
+              @if (fotoDocumentoFile) {
+                <button type="button" class="remove-btn" (click)="removeFile('documento')" aria-label="Quitar documento">
+                  <ion-icon name="close-circle"></ion-icon>
+                </button>
+              }
             </div>
           }
         </div>
@@ -196,44 +207,50 @@
         <!-- Documento del padre -->
         <div class="file-section">
           <label class="file-label">
-            <ion-icon name="document-outline"></ion-icon>
+            <ion-icon name="card-outline"></ion-icon>
             Documento del padre de familia
             <span class="opcional">(opcional)</span>
           </label>
-          <div class="file-upload-area">
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              (change)="onFileSelected($event, 'padre')"
-              class="file-input"
-              id="file-padre"
-            />
-            <label for="file-padre" class="file-dropzone">
-              <ion-icon name="cloud-upload-outline" class="upload-icon"></ion-icon>
-              <span>Seleccionar archivo</span>
-            </label>
+          <div class="media-actions">
+            <button type="button" class="media-btn media-btn--primary" (click)="takeParentPhoto()">
+              <ion-icon name="camera-outline"></ion-icon>
+              <span>Tomar foto</span>
+            </button>
+            <button type="button" class="media-btn media-btn--secondary" (click)="pickParentFromGallery()">
+              <ion-icon name="images-outline"></ion-icon>
+              <span>Galería</span>
+            </button>
           </div>
-          @if (documentoPadreEsPdf && (fotoDocumentoPadreFile || form.controls.foto_documento_padre_url.value)) {
-            <div class="pdf-info">
-              <div class="pdf-badge">
-                <ion-icon name="document-text-outline"></ion-icon>
-                Documento PDF
-              </div>
-              @if (fotoDocumentoPadrePreview && !fotoDocumentoPadreFile) {
-                <a [href]="fotoDocumentoPadrePreview" target="_blank" class="pdf-action-link">
-                  <ion-icon name="open-outline"></ion-icon>
-                  Ver archivo
-                </a>
+          @if (fotoDocumentoPadreFile || form.controls.foto_documento_padre_url.value) {
+            <div class="file-status">
+              @if (documentoPadreEsPdf) {
+                <div class="pdf-info">
+                  <div class="pdf-badge">
+                    <ion-icon name="document-text-outline"></ion-icon>
+                    Documento PDF
+                  </div>
+                  @if (fotoDocumentoPadrePreview && !fotoDocumentoPadreFile) {
+                    <a [href]="fotoDocumentoPadrePreview" target="_blank" class="pdf-action-link">
+                      <ion-icon name="open-outline"></ion-icon>
+                      Ver archivo
+                    </a>
+                  }
+                </div>
+              } @else {
+                <div class="preview-frame">
+                  <app-lazy-image
+                    [src]="fotoDocumentoPadrePreview"
+                    [loading]="loadingFotoDocumentoPadre"
+                    alt="Vista previa del documento del padre"
+                    objectFit="contain"
+                  />
+                </div>
               }
-            </div>
-          } @else if (fotoDocumentoPadrePreview || loadingFotoDocumentoPadre) {
-            <div class="preview-frame">
-              <app-lazy-image
-                [src]="fotoDocumentoPadrePreview"
-                [loading]="loadingFotoDocumentoPadre"
-                alt="Vista previa del documento del padre"
-                objectFit="contain"
-              />
+              @if (fotoDocumentoPadreFile) {
+                <button type="button" class="remove-btn" (click)="removeFile('padre')" aria-label="Quitar documento">
+                  <ion-icon name="close-circle"></ion-icon>
+                </button>
+              }
             </div>
           }
         </div>

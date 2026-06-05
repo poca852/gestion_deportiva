@@ -23,10 +23,13 @@ import { addIcons } from 'ionicons';
 import {
   bulbOutline,
   cameraOutline,
+  cardOutline,
   checkmarkOutline,
+  closeCircle,
   cloudUploadOutline,
   documentOutline,
   documentTextOutline,
+  imagesOutline,
   openOutline,
   peopleOutline,
   personAddOutline,
@@ -38,6 +41,7 @@ import { GeneroAlumno, NivelAlumno } from '../../../interfaces/alumno.interface'
 import { AlumnosService } from '../../../services/alumnos.service';
 import { AuthService } from '../../../services/auth.service';
 import { CategoriaService, CATEGORIAS } from '../../../services/categoria.service';
+import { MediaService } from '../../../services/media.service';
 import { SupabaseService } from '../../../services/supabase.service';
 
 @Component({
@@ -74,6 +78,7 @@ export class AlumnoFormPage implements OnInit {
   private readonly categoriaService = inject(CategoriaService);
   private readonly authService = inject(AuthService);
   private readonly toastCtrl = inject(ToastController);
+  private readonly mediaService = inject(MediaService);
 
   alumnoId: string | null = null;
   /** Guarda el updated_at original para optimistic locking */
@@ -115,10 +120,13 @@ export class AlumnoFormPage implements OnInit {
     addIcons({
       bulbOutline,
       cameraOutline,
+      cardOutline,
       checkmarkOutline,
+      closeCircle,
       cloudUploadOutline,
       documentOutline,
       documentTextOutline,
+      imagesOutline,
       openOutline,
       peopleOutline,
       personAddOutline,
@@ -228,30 +236,116 @@ export class AlumnoFormPage implements OnInit {
     }
   }
 
-  onFileSelected(event: Event, tipo: 'estudiante' | 'documento' | 'padre'): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
+  // ──────────────────────────────────────
+  //  Acciones de cámara / galería
+  // ──────────────────────────────────────
 
-    const preview = URL.createObjectURL(file);
+  async takeStudentPhoto(): Promise<void> {
+    const media = await this.mediaService.takePhoto();
+    if (media) {
+      this.applyFileTo('estudiante', media.file, media.preview);
+    }
+  }
+
+  async pickStudentFromGallery(): Promise<void> {
+    const media = await this.mediaService.pickFromGallery();
+    if (media) {
+      this.applyFileTo('estudiante', media.file, media.preview);
+    }
+  }
+
+  async takeParentPhoto(): Promise<void> {
+    const media = await this.mediaService.takePhoto();
+    if (media) {
+      this.applyFileTo('padre', media.file, media.preview);
+    }
+  }
+
+  async pickParentFromGallery(): Promise<void> {
+    const media = await this.mediaService.pickFromGallery();
+    if (media) {
+      this.applyFileTo('padre', media.file, media.preview);
+    }
+  }
+
+  /**
+   * Para la partida de nacimiento: se prefiere PDF, pero también
+   * se permite fotografiar un documento físico.
+   */
+  async pickBirthCertificatePdf(): Promise<void> {
+    const file = await this.mediaService.pickPdf();
+    if (file) {
+      const preview = URL.createObjectURL(file);
+      this.applyFileTo('documento', file, preview);
+    }
+  }
+
+  async takeBirthCertificatePhoto(): Promise<void> {
+    const media = await this.mediaService.takePhoto();
+    if (media) {
+      this.applyFileTo('documento', media.file, media.preview);
+    }
+  }
+
+  // ──────────────────────────────────────
+  //  Aplicar archivo seleccionado al estado
+  // ──────────────────────────────────────
+
+  private applyFileTo(
+    tipo: 'estudiante' | 'documento' | 'padre',
+    file: File,
+    preview: string
+  ): void {
+    const esPdf =
+      file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
     if (tipo === 'estudiante') {
       this.fotoEstudianteFile = file;
       this.fotoEstudiantePreview = preview;
       this.loadingFotoEstudiante = false;
     } else if (tipo === 'documento') {
       this.fotoDocumentoFile = file;
-      this.documentoEsPdf =
-        file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-      this.fotoDocumentoPreview = this.documentoEsPdf ? null : preview;
+      this.documentoEsPdf = esPdf;
+      this.fotoDocumentoPreview = esPdf ? null : preview;
       this.loadingFotoDocumento = false;
     } else {
       this.fotoDocumentoPadreFile = file;
-      this.documentoPadreEsPdf =
-        file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-      this.fotoDocumentoPadrePreview = this.documentoPadreEsPdf ? null : preview;
+      this.documentoPadreEsPdf = esPdf;
+      this.fotoDocumentoPadrePreview = esPdf ? null : preview;
       this.loadingFotoDocumentoPadre = false;
     }
   }
+
+  /**
+   * Quita el archivo seleccionado para un campo, volviendo al valor
+   * persistido (si existe) o limpiando la previsualización.
+   */
+  removeFile(tipo: 'estudiante' | 'documento' | 'padre'): void {
+    const formKey =
+      tipo === 'estudiante'
+        ? 'foto_estudiante_url'
+        : tipo === 'documento'
+          ? 'foto_documento_url'
+          : 'foto_documento_padre_url' as const;
+
+    if (tipo === 'estudiante') {
+      this.fotoEstudianteFile = null;
+      this.fotoEstudiantePreview = this.form.controls[formKey].value || null;
+      this.loadingFotoEstudiante = false;
+    } else if (tipo === 'documento') {
+      this.fotoDocumentoFile = null;
+      this.fotoDocumentoPreview = this.form.controls[formKey].value || null;
+      this.loadingFotoDocumento = false;
+    } else {
+      this.fotoDocumentoPadreFile = null;
+      this.fotoDocumentoPadrePreview = this.form.controls[formKey].value || null;
+      this.loadingFotoDocumentoPadre = false;
+    }
+  }
+
+  // ──────────────────────────────────────
+  //  Helpers
+  // ──────────────────────────────────────
 
   nivelColor(nivel: NivelAlumno): string {
     const colores: Record<NivelAlumno, string> = {
@@ -265,6 +359,10 @@ export class AlumnoFormPage implements OnInit {
   aplicarCategoriaRecomendada(): void {
     this.form.patchValue({ categoria: this.categoriaRecomendada });
   }
+
+  // ──────────────────────────────────────
+  //  Submit
+  // ──────────────────────────────────────
 
   async submit(): Promise<void> {
     if (this.form.invalid) {
