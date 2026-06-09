@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { toDataURL } from 'qrcode';
+import { environment } from '../../environments/environment';
 import { CARNET_DATA_BATCH_SIZE } from '../constants/carnet.constants';
 import { Alumno } from '../interfaces/alumno.interface';
 import { AcademiaContextService } from './academia-context.service';
@@ -27,9 +28,12 @@ export class CarnetService {
   private readonly supabaseService = inject(SupabaseService);
   private readonly academiaContext = inject(AcademiaContextService);
 
-  async generateQrDataUrl(uuid: string): Promise<string> {
+  async generateQrDataUrl(alumno: Alumno): Promise<string> {
+    const base = environment.siteUrl.replace(/\/$/, '');
+    const profileUrl = `${base}/perfil/${alumno.public_token}`;
+
     try {
-      return await toDataURL(uuid, {
+      return await toDataURL(profileUrl, {
         width: 280,
         margin: 1,
         color: {
@@ -71,7 +75,7 @@ export class CarnetService {
     const assets = shared ?? (await this.getSharedAssets());
 
     const [qrDataUrl, fotoDataUrl] = await Promise.all([
-      this.generateQrDataUrl(alumno.id),
+      this.generateQrDataUrl(alumno),
       this.loadImageAsDataUrl(alumno.foto_estudiante_url),
     ]);
 

@@ -3,6 +3,7 @@ export type NivelAlumno = 'basico' | 'intermedio' | 'avanzado';
 
 export interface Alumno {
   id: string;
+  public_token: string;
   nombres: string;
   apellidos: string;
   fecha_nacimiento: string;

@@ -22,6 +22,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'perfil/:token',
+    loadComponent: () =>
+      import('./pages/alumno-publico/alumno-publico.page').then(
+        (m) => m.AlumnoPublicoPage
+      ),
+  },
+  {
     path: 'seleccionar-academia',
     loadComponent: () =>
       import('./pages/seleccionar-academia/seleccionar-academia.page').then(

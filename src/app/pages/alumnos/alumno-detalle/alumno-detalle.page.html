@@ -52,6 +52,32 @@
       </div>
     </section>
 
+    <!-- PERFIL PÚBLICO -->
+    @if (perfilPublicoUrl) {
+      <ion-card class="detail-card perfil-publico-card">
+        <ion-card-header>
+          <ion-card-title>
+            <ion-icon name="link-outline" aria-hidden="true"></ion-icon>
+            Perfil público
+          </ion-card-title>
+          <ion-card-subtitle>Enlace compartible sin iniciar sesión</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="perfil-publico-url">{{ perfilPublicoUrl }}</p>
+          <div class="perfil-publico-actions">
+            <ion-button expand="block" fill="outline" (click)="copiarEnlacePublico()">
+              <ion-icon name="copy-outline" slot="start"></ion-icon>
+              Copiar enlace
+            </ion-button>
+            <ion-button expand="block" (click)="abrirPerfilPublico()">
+              <ion-icon name="open-outline" slot="start"></ion-icon>
+              Ver perfil público
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    }
+
     <!-- DATOS PERSONALES -->
     <ion-card class="detail-card">
       <ion-card-header>

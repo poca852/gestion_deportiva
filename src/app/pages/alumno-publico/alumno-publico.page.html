@@ -1,0 +1,151 @@
+<ion-content class="public-profile-content" [fullscreen]="true">
+  <div class="profile-backdrop" aria-hidden="true">
+    <div class="profile-backdrop__orb profile-backdrop__orb--1"></div>
+    <div class="profile-backdrop__orb profile-backdrop__orb--2"></div>
+  </div>
+
+  <div class="profile-wrapper">
+    @if (loading) {
+      <div class="profile-state">
+        <ion-spinner name="crescent" color="light"></ion-spinner>
+        <p>Cargando perfil...</p>
+      </div>
+    } @else if (errorMessage) {
+      <div class="profile-state profile-state--error">
+        <ion-icon name="person-circle-outline" class="state-icon"></ion-icon>
+        <h2>Perfil no disponible</h2>
+        <p>{{ errorMessage }}</p>
+      </div>
+    } @else if (perfil) {
+      <article class="profile-card">
+        <!-- Encabezado academia -->
+        <header class="profile-card__header">
+          @if (perfil.academia_logo_url) {
+            <div class="academia-logo">
+              <app-lazy-image
+                [src]="perfil.academia_logo_url"
+                [alt]="'Logo de ' + perfil.academia_nombre"
+                objectFit="contain"
+                [lightBackground]="true"
+              />
+            </div>
+          }
+          @if (perfil.academia_nombre) {
+            <span class="academia-nombre">{{ perfil.academia_nombre | mayusculas }}</span>
+          }
+          <span class="profile-badge">
+            <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+            Perfil verificado
+          </span>
+        </header>
+
+        <!-- Hero alumno -->
+        <section class="profile-hero">
+          <div class="avatar-ring">
+            <div class="avatar-container">
+              <app-lazy-image
+                [src]="perfil.foto_url"
+                [alt]="'Foto de ' + nombreCompleto"
+                objectFit="cover"
+                [hasCustomFallback]="true"
+              >
+                <div class="avatar-fallback">
+                  @if (iniciales) {
+                    <span>{{ iniciales }}</span>
+                  } @else {
+                    <ion-icon name="person-circle-outline"></ion-icon>
+                  }
+                </div>
+              </app-lazy-image>
+            </div>
+          </div>
+
+          <h1 class="profile-name">{{ nombreCompleto | mayusculas }}</h1>
+
+          <div class="categoria-chip">
+            <ion-icon name="ribbon-outline" aria-hidden="true"></ion-icon>
+            {{ perfil.categoria | mayusculas }}
+          </div>
+        </section>
+
+        <!-- Datos -->
+        <section class="profile-info">
+          <div class="info-item">
+            <div class="info-icon">
+              <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
+            </div>
+            <div class="info-content">
+              <span class="info-label">Fecha de nacimiento</span>
+              <span class="info-value">{{ formatFecha(perfil.fecha_nacimiento) }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-icon">
+              <ion-icon name="ribbon-outline" aria-hidden="true"></ion-icon>
+            </div>
+            <div class="info-content">
+              <span class="info-label">Categoría</span>
+              <span class="info-value">{{ perfil.categoria | mayusculas }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Documento -->
+        <section class="profile-document">
+          <div class="document-header">
+            <div class="document-title">
+              <ion-icon name="document-outline" aria-hidden="true"></ion-icon>
+              <div>
+                <h2>Partida de nacimiento</h2>
+                <p>Documento oficial del alumno</p>
+              </div>
+            </div>
+          </div>
+
+          @if (!tieneDocumento) {
+            <div class="document-empty">
+              <ion-icon name="document-outline" aria-hidden="true"></ion-icon>
+              <ion-note>No hay documento registrado.</ion-note>
+            </div>
+          } @else if (perfil.documento_es_pdf) {
+            <div class="document-preview">
+              <app-pdf-viewer
+                [src]="perfil.documento_url"
+                [downloadName]="documentoDownloadName"
+              />
+            </div>
+          } @else {
+            <div class="document-preview document-preview--image">
+              <app-lazy-image
+                [src]="perfil.documento_url"
+                alt="Documento del alumno"
+                objectFit="contain"
+                [lightBackground]="true"
+              />
+            </div>
+            <div class="document-actions">
+              <ion-button
+                expand="block"
+                color="primary"
+                (click)="descargarDocumento()"
+                [disabled]="descargandoDocumento"
+              >
+                @if (descargandoDocumento) {
+                  <ion-spinner name="crescent"></ion-spinner>
+                } @else {
+                  <ion-icon name="download-outline" slot="start"></ion-icon>
+                  Descargar documento
+                }
+              </ion-button>
+            </div>
+          }
+        </section>
+
+        <footer class="profile-footer">
+          <p>Perfil público de alumno · {{ perfil.academia_nombre || 'Academia deportiva' }}</p>
+        </footer>
+      </article>
+    }
+  </div>
+</ion-content>

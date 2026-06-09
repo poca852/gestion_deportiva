@@ -102,6 +102,32 @@
 }
 
 // ---------------------------------------------------------------------------
+// Perfil público
+// ---------------------------------------------------------------------------
+.perfil-publico-card {
+  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.15);
+  background: rgba(var(--ion-color-primary-rgb), 0.03);
+}
+
+.perfil-publico-url {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  font-family: ui-monospace, monospace;
+  word-break: break-all;
+  color: var(--ion-color-step-700);
+  background: var(--ion-color-light);
+  border-radius: var(--app-radius-sm);
+  border: 1px solid var(--ion-color-light-shade);
+}
+
+.perfil-publico-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// ---------------------------------------------------------------------------
 // Detail cards
 // ---------------------------------------------------------------------------
 .detail-card {

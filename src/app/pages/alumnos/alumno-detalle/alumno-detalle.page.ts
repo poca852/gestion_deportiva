@@ -30,6 +30,9 @@ import {
   createOutline,
   idCardOutline,
   documentOutline,
+  linkOutline,
+  openOutline,
+  copyOutline,
   peopleOutline,
   personOutline,
 } from 'ionicons/icons';
@@ -39,6 +42,7 @@ import { PdfViewerComponent } from '../../../components/pdf-viewer/pdf-viewer.co
 import { Alumno, GeneroAlumno, NivelAlumno } from '../../../interfaces/alumno.interface';
 import { Convocatoria } from '../../../interfaces/convocatoria.interface';
 import { AlumnosService } from '../../../services/alumnos.service';
+import { PublicAlumnoService } from '../../../services/public-alumno.service';
 import { SupabaseService } from '../../../services/supabase.service';
 import { MayusculasPipe } from '../../../pipes/mayusculas.pipe';
 
@@ -76,6 +80,7 @@ import { MayusculasPipe } from '../../../pipes/mayusculas.pipe';
 export class AlumnoDetallePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly alumnosService = inject(AlumnosService);
+  private readonly publicAlumnoService = inject(PublicAlumnoService);
   private readonly supabaseService = inject(SupabaseService);
   private readonly toastCtrl = inject(ToastController);
 
@@ -99,6 +104,9 @@ export class AlumnoDetallePage implements OnInit {
       createOutline,
       documentOutline,
       idCardOutline,
+      linkOutline,
+      openOutline,
+      copyOutline,
       personOutline,
       peopleOutline,
       basketballOutline,
@@ -160,6 +168,40 @@ export class AlumnoDetallePage implements OnInit {
 
     const normalizado = telefono.replace(/[^\d+]/g, '');
     return normalizado.length > 0 ? `tel:${normalizado}` : null;
+  }
+
+  get perfilPublicoUrl(): string | null {
+    if (!this.alumno?.public_token) return null;
+    return this.publicAlumnoService.buildPublicProfileUrl(this.alumno.public_token);
+  }
+
+  async copiarEnlacePublico(): Promise<void> {
+    const url = this.perfilPublicoUrl;
+    if (!url) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      const toast = await this.toastCtrl.create({
+        message: 'Enlace del perfil público copiado',
+        duration: 2500,
+        color: 'success',
+      });
+      await toast.present();
+    } catch {
+      const toast = await this.toastCtrl.create({
+        message: 'No se pudo copiar el enlace',
+        duration: 2500,
+        color: 'danger',
+      });
+      await toast.present();
+    }
+  }
+
+  abrirPerfilPublico(): void {
+    const url = this.perfilPublicoUrl;
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   }
 
   nivelLabel(nivel: NivelAlumno | null): string {
