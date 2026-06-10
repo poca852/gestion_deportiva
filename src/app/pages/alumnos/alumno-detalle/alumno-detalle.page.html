@@ -78,6 +78,45 @@
       </ion-card>
     }
 
+    <!-- ASISTENCIA -->
+    <ion-card class="detail-card">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
+          Asistencia
+        </ion-card-title>
+        <ion-card-subtitle>Desde ingreso · solo sesiones cerradas</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        @if (loadingAsistencia) {
+          <div class="loading-inline">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else if (resumenAsistencia) {
+          <div class="asistencia-resumen">
+            <div class="asistencia-stat">
+              <span class="asistencia-valor">{{ resumenAsistencia.presentes }}</span>
+              <span class="asistencia-label">Asistencias</span>
+            </div>
+            <div class="asistencia-stat asistencia-stat--faltas">
+              <span class="asistencia-valor">{{ resumenAsistencia.faltas }}</span>
+              <span class="asistencia-label">Faltas</span>
+            </div>
+            <div class="asistencia-stat">
+              <span class="asistencia-valor">{{ resumenAsistencia.porcentaje }}%</span>
+              <span class="asistencia-label">Asistencia</span>
+            </div>
+          </div>
+          <p class="asistencia-periodo">
+            {{ resumenAsistencia.esperados }} entrenamientos cerrados
+            ({{ formatFecha(resumenAsistencia.desde) }} – {{ formatFecha(resumenAsistencia.hasta) }})
+          </p>
+        } @else {
+          <ion-note>Sin datos de asistencia disponibles.</ion-note>
+        }
+      </ion-card-content>
+    </ion-card>
+
     <!-- DATOS PERSONALES -->
     <ion-card class="detail-card">
       <ion-card-header>

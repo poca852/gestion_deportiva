@@ -108,6 +108,40 @@ export class AlumnosService {
     );
   }
 
+  searchByNombre(
+    term: string,
+    limit = 12
+  ): Observable<Pick<Alumno, 'id' | 'nombres' | 'apellidos' | 'categoria'>[]> {
+    const trimmed = term.trim();
+    if (trimmed.length < 2) {
+      return from(Promise.resolve([]));
+    }
+
+    let query = this.withAcademiaFilter(
+      this.buildQuery()
+        .select('id, nombres, apellidos, categoria')
+        .order('apellidos')
+        .limit(limit)
+    );
+
+    const searchTerm = `%${trimmed}%`;
+    query = query.or(
+      `nombres.ilike.${searchTerm},apellidos.ilike.${searchTerm}`
+    );
+
+    return from(
+      (
+        query as Promise<{
+          data: Pick<Alumno, 'id' | 'nombres' | 'apellidos' | 'categoria'>[] | null;
+          error: unknown;
+        }>
+      ).then(({ data, error }) => {
+        if (error) throw error;
+        return data ?? [];
+      })
+    );
+  }
+
   create(form: AlumnoForm): Observable<Alumno> {
     const academiaId = this.academiaContext.academiaId();
     const record = academiaId ? { ...form, academia_id: academiaId } : form;

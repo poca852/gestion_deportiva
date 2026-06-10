@@ -141,6 +141,13 @@ export const routes: Routes = [
             (m) => m.ConvocatoriaPrintPage
           ),
       },
+      {
+        path: 'asistencia',
+        loadComponent: () =>
+          import('./pages/asistencia/tomar-asistencia/tomar-asistencia.page').then(
+            (m) => m.TomarAsistenciaPage
+          ),
+      },
     ],
   },
   {

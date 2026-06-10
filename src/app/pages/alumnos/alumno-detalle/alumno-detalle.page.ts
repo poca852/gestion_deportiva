@@ -27,6 +27,7 @@ import {
   basketballOutline,
   callOutline,
   calendarOutline,
+  checkmarkCircleOutline,
   createOutline,
   idCardOutline,
   documentOutline,
@@ -36,12 +37,14 @@ import {
   peopleOutline,
   personOutline,
 } from 'ionicons/icons';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { LazyImageComponent } from '../../../components/lazy-image/lazy-image.component';
 import { PdfViewerComponent } from '../../../components/pdf-viewer/pdf-viewer.component';
 import { Alumno, GeneroAlumno, NivelAlumno } from '../../../interfaces/alumno.interface';
 import { Convocatoria } from '../../../interfaces/convocatoria.interface';
+import { ResumenAsistenciaAlumno } from '../../../interfaces/sesion-entrenamiento.interface';
 import { AlumnosService } from '../../../services/alumnos.service';
+import { AsistenciasService } from '../../../services/asistencias.service';
 import { PublicAlumnoService } from '../../../services/public-alumno.service';
 import { SupabaseService } from '../../../services/supabase.service';
 import { MayusculasPipe } from '../../../pipes/mayusculas.pipe';
@@ -80,14 +83,17 @@ import { MayusculasPipe } from '../../../pipes/mayusculas.pipe';
 export class AlumnoDetallePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly alumnosService = inject(AlumnosService);
+  private readonly asistenciasService = inject(AsistenciasService);
   private readonly publicAlumnoService = inject(PublicAlumnoService);
   private readonly supabaseService = inject(SupabaseService);
   private readonly toastCtrl = inject(ToastController);
 
   alumno: Alumno | null = null;
   convocatorias: Convocatoria[] = [];
+  resumenAsistencia: ResumenAsistenciaAlumno | null = null;
   loading = true;
   loadingConvocatorias = true;
+  loadingAsistencia = true;
   loadingFotoEstudiante = false;
   loadingDocumento = false;
   loadingDocumentoPadre = false;
@@ -110,6 +116,7 @@ export class AlumnoDetallePage implements OnInit {
       personOutline,
       peopleOutline,
       basketballOutline,
+      checkmarkCircleOutline,
     });
   }
 
@@ -123,11 +130,16 @@ export class AlumnoDetallePage implements OnInit {
     forkJoin({
       alumno: this.alumnosService.getById(id),
       convocatorias: this.alumnosService.getConvocatoriasByAlumnoId(id),
+      resumenAsistencia: this.asistenciasService
+        .getResumenAlumno(id)
+        .pipe(catchError(() => of(null))),
     }).subscribe({
-      next: async ({ alumno, convocatorias }) => {
+      next: async ({ alumno, convocatorias, resumenAsistencia }) => {
         this.alumno = alumno;
         this.convocatorias = convocatorias;
+        this.resumenAsistencia = resumenAsistencia;
         this.loadingConvocatorias = false;
+        this.loadingAsistencia = false;
         this.documentoEsPdf = this.supabaseService.isPdfStored(
           alumno.foto_documento_url
         );
@@ -137,6 +149,7 @@ export class AlumnoDetallePage implements OnInit {
       error: async () => {
         this.loading = false;
         this.loadingConvocatorias = false;
+        this.loadingAsistencia = false;
         const toast = await this.toastCtrl.create({
           message: 'No se pudo cargar el alumno',
           duration: 2500,

@@ -18,6 +18,7 @@ import {
   addOutline,
   analyticsOutline,
   calendarOutline,
+  checkmarkDoneOutline,
   chevronForwardOutline,
   documentTextOutline,
   idCardOutline,
@@ -96,6 +97,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       personAddOutline,
       documentTextOutline,
       idCardOutline,
+      checkmarkDoneOutline,
       addOutline,
       chevronForwardOutline,
     });
@@ -123,6 +125,13 @@ export class DashboardPage implements OnInit, OnDestroy {
         icon: 'document-text-outline',
         url: '/app/alumnos/listado-print',
         color: 'tertiary',
+      },
+      {
+        title: 'Tomar asistencia',
+        subtitle: 'Escanear QR o buscar por nombre',
+        icon: 'checkmark-done-outline',
+        url: '/app/asistencia',
+        color: 'success',
       },
       {
         title: 'Carnets en masa',

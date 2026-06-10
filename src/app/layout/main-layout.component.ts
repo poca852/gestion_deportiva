@@ -21,6 +21,7 @@ import {
   basketballOutline,
   businessOutline,
   calendarOutline,
+  checkmarkDoneOutline,
   homeOutline,
   logOutOutline,
   peopleOutline,
@@ -92,6 +93,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       url: '/app/convocatorias',
       icon: 'calendar-outline',
     },
+    {
+      title: 'Asistencia',
+      url: '/app/asistencia',
+      icon: 'checkmark-done-outline',
+    },
   ];
 
   ngOnInit(): void {
@@ -120,6 +126,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       peopleOutline,
       personOutline,
       calendarOutline,
+      checkmarkDoneOutline,
       logOutOutline,
       settingsOutline,
       shieldCheckmarkOutline,
