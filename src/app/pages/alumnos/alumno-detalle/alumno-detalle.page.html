@@ -85,9 +85,42 @@
           <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
           Asistencia
         </ion-card-title>
-        <ion-card-subtitle>Desde ingreso · solo sesiones cerradas</ion-card-subtitle>
+        <ion-card-subtitle>Selecciona un periodo · solo sesiones cerradas</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
+        <div class="asistencia-filtros">
+          <div class="asistencia-fechas">
+            <ion-item class="asistencia-fecha-item" lines="none">
+              <ion-label position="stacked">Desde</ion-label>
+              <ion-input
+                type="date"
+                [value]="fechaDesde"
+                [max]="fechaHasta"
+                (ionInput)="fechaDesde = $any($event).detail.value ?? ''"
+              ></ion-input>
+            </ion-item>
+            <ion-item class="asistencia-fecha-item" lines="none">
+              <ion-label position="stacked">Hasta</ion-label>
+              <ion-input
+                type="date"
+                [value]="fechaHasta"
+                [min]="fechaDesde"
+                [max]="fechaMaxima"
+                (ionInput)="fechaHasta = $any($event).detail.value ?? ''"
+              ></ion-input>
+            </ion-item>
+          </div>
+          <ion-button
+            expand="block"
+            class="asistencia-consultar-btn"
+            (click)="consultarAsistencia()"
+            [disabled]="loadingAsistencia || !fechaDesde || !fechaHasta"
+          >
+            <ion-icon name="search-outline" slot="start"></ion-icon>
+            Consultar
+          </ion-button>
+        </div>
+
         @if (loadingAsistencia) {
           <div class="loading-inline">
             <ion-spinner name="crescent"></ion-spinner>

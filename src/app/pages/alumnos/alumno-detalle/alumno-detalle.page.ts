@@ -13,6 +13,7 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonInput,
   IonItem,
   IonLabel,
   IonList,
@@ -29,6 +30,7 @@ import {
   calendarOutline,
   checkmarkCircleOutline,
   createOutline,
+  searchOutline,
   idCardOutline,
   documentOutline,
   linkOutline,
@@ -73,6 +75,7 @@ import { MayusculasPipe } from '../../../pipes/mayusculas.pipe';
     IonChip,
     IonList,
     IonItem,
+    IonInput,
     IonLabel,
     IonNote,
     LazyImageComponent,
@@ -88,9 +91,12 @@ export class AlumnoDetallePage implements OnInit {
   private readonly supabaseService = inject(SupabaseService);
   private readonly toastCtrl = inject(ToastController);
 
+  alumnoId: string | null = null;
   alumno: Alumno | null = null;
   convocatorias: Convocatoria[] = [];
   resumenAsistencia: ResumenAsistenciaAlumno | null = null;
+  fechaDesde = '';
+  fechaHasta = '';
   loading = true;
   loadingConvocatorias = true;
   loadingAsistencia = true;
@@ -117,6 +123,7 @@ export class AlumnoDetallePage implements OnInit {
       peopleOutline,
       basketballOutline,
       checkmarkCircleOutline,
+      searchOutline,
     });
   }
 
@@ -127,19 +134,18 @@ export class AlumnoDetallePage implements OnInit {
       return;
     }
 
+    this.alumnoId = id;
+
     forkJoin({
       alumno: this.alumnosService.getById(id),
       convocatorias: this.alumnosService.getConvocatoriasByAlumnoId(id),
-      resumenAsistencia: this.asistenciasService
-        .getResumenAlumno(id)
-        .pipe(catchError(() => of(null))),
     }).subscribe({
-      next: async ({ alumno, convocatorias, resumenAsistencia }) => {
+      next: async ({ alumno, convocatorias }) => {
         this.alumno = alumno;
         this.convocatorias = convocatorias;
-        this.resumenAsistencia = resumenAsistencia;
         this.loadingConvocatorias = false;
-        this.loadingAsistencia = false;
+        this.inicializarFechasAsistencia(alumno);
+        this.consultarAsistencia();
         this.documentoEsPdf = this.supabaseService.isPdfStored(
           alumno.foto_documento_url
         );
@@ -171,6 +177,10 @@ export class AlumnoDetallePage implements OnInit {
 
   get tieneDocumentoPadre(): boolean {
     return !!this.alumno?.foto_documento_padre_url;
+  }
+
+  get fechaMaxima(): string {
+    return this.asistenciasService.localDateString();
   }
 
   get telefonoTutorHref(): string | null {
@@ -243,6 +253,36 @@ export class AlumnoDetallePage implements OnInit {
     });
   }
 
+  consultarAsistencia(): void {
+    if (!this.alumnoId || !this.fechaDesde || !this.fechaHasta) {
+      return;
+    }
+
+    if (this.fechaDesde > this.fechaHasta) {
+      void this.mostrarToast(
+        'La fecha de inicio no puede ser posterior a la fecha de fin',
+        'warning'
+      );
+      return;
+    }
+
+    this.loadingAsistencia = true;
+    this.asistenciasService
+      .getResumenAlumno(this.alumnoId, this.fechaDesde, this.fechaHasta)
+      .pipe(catchError(() => of(null)))
+      .subscribe({
+        next: (resumen) => {
+          this.resumenAsistencia = resumen;
+          this.loadingAsistencia = false;
+        },
+        error: async () => {
+          this.resumenAsistencia = null;
+          this.loadingAsistencia = false;
+          await this.mostrarToast('No se pudo cargar la asistencia', 'danger');
+        },
+      });
+  }
+
   generoLabel(genero: GeneroAlumno): string {
     const labels: Record<GeneroAlumno, string> = {
       masculino: 'Masculino',
@@ -250,6 +290,29 @@ export class AlumnoDetallePage implements OnInit {
       otro: 'Otro',
     };
     return labels[genero];
+  }
+
+  private inicializarFechasAsistencia(alumno: Alumno): void {
+    this.fechaHasta = this.asistenciasService.localDateString();
+    if (alumno.fecha_ingreso) {
+      this.fechaDesde = alumno.fecha_ingreso;
+      return;
+    }
+
+    const year = new Date().getFullYear();
+    this.fechaDesde = `${year}-01-01`;
+  }
+
+  private async mostrarToast(
+    message: string,
+    color: 'success' | 'warning' | 'danger'
+  ): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2500,
+      color,
+    });
+    await toast.present();
   }
 
   private async cargarArchivos(alumno: Alumno): Promise<void> {

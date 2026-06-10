@@ -301,6 +301,38 @@
   }
 }
 
+.asistencia-filtros {
+  margin-bottom: 16px;
+}
+
+.asistencia-fechas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.asistencia-fecha-item {
+  --background: var(--app-surface-elevated);
+  --border-radius: var(--app-radius-sm);
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --inner-padding-end: 0;
+  border: 1px solid var(--app-border-color);
+  border-radius: var(--app-radius-sm);
+
+  ion-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+}
+
+.asistencia-consultar-btn {
+  margin: 0;
+}
+
 .asistencia-resumen {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
