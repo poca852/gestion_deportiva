@@ -47,6 +47,11 @@ ion-content.has-fab {
   --padding-bottom: 96px;
 }
 
+// Safe area inferior en páginas sin FAB (barra de navegación de Android)
+ion-content.has-safe-bottom {
+  --padding-bottom: calc(16px + env(safe-area-inset-bottom, 16px));
+}
+
 ion-fab[slot="fixed"] {
   margin-bottom: calc(16px + env(safe-area-inset-bottom, 16px));
 }
