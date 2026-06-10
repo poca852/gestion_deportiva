@@ -163,10 +163,11 @@ export class ConvocatoriasService {
     form: ConvocatoriaForm,
     creadoPor: string
   ): Promise<Convocatoria> {
+    const { alumno_ids, ...convocatoriaData } = form;
     const academiaId = this.academiaContext.academiaId();
     const record = academiaId
-      ? { ...form, creado_por: creadoPor, academia_id: academiaId }
-      : { ...form, creado_por: creadoPor };
+      ? { ...convocatoriaData, creado_por: creadoPor, academia_id: academiaId }
+      : { ...convocatoriaData, creado_por: creadoPor };
 
     const { data: convocatoria, error: convError } =
       await this.buildQuery()
@@ -176,8 +177,8 @@ export class ConvocatoriasService {
 
     if (convError) throw convError;
 
-    if (form.alumno_ids.length > 0) {
-      const rows = form.alumno_ids.map((alumnoId) => ({
+    if (alumno_ids.length > 0) {
+      const rows = alumno_ids.map((alumnoId) => ({
         convocatoria_id: convocatoria.id,
         alumno_id: alumnoId,
       }));
