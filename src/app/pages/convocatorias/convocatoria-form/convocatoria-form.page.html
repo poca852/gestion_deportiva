@@ -50,6 +50,8 @@
             <span>Plantilla — {{ form.controls.categoria.value }}</span>
           </div>
 
+          <p class="plantilla-hint">Ordenados por tasa de asistencia (mejor arriba)</p>
+
           <div class="plantilla-actions">
             <ion-button fill="clear" size="small" (click)="selectAll()">Seleccionar todos</ion-button>
             <ion-button fill="clear" size="small" (click)="deselectAll()">Deseleccionar todos</ion-button>
@@ -59,27 +61,44 @@
             <div class="loading-center">
               <ion-spinner name="crescent"></ion-spinner>
             </div>
-          } @else if (alumnos.length === 0) {
+          } @else if (alumnosPlantilla.length === 0) {
             <div class="empty-plantilla">
               <ion-icon name="person-outline" class="empty-plantilla-icon"></ion-icon>
               <p>No hay alumnos en esta categoría.</p>
             </div>
           } @else {
             <div class="alumnos-plantilla">
-              @for (a of alumnos; track a.id) {
+              @for (item of alumnosPlantilla; track item.alumno.id) {
                 <div
                   class="alumno-check-item"
-                  [class.selected]="isSelected(a.id)"
-                  (click)="toggleAlumno(a.id, !isSelected(a.id))"
+                  [class.selected]="isSelected(item.alumno.id)"
+                  (click)="toggleAlumno(item.alumno.id, !isSelected(item.alumno.id))"
                 >
                   <div class="alumno-check-avatar">
-                    {{ a.nombres.charAt(0) }}{{ a.apellidos.charAt(0) }}
+                    {{ item.alumno.nombres.charAt(0) }}{{ item.alumno.apellidos.charAt(0) }}
                   </div>
-                  <span class="alumno-check-nombre">{{ a.apellidos }}, {{ a.nombres }}</span>
+                  <div class="alumno-check-info">
+                    <span class="alumno-check-nombre">{{ item.alumno.apellidos }}, {{ item.alumno.nombres }}</span>
+                    @if (item.resumen) {
+                      <span class="alumno-check-detalle">
+                        {{ item.resumen.presentes }}/{{ item.resumen.esperados }} entrenamientos
+                      </span>
+                    }
+                  </div>
+                  @if (item.resumen) {
+                    <span
+                      class="asistencia-badge"
+                      [class]="getAsistenciaClass(item.resumen.porcentaje)"
+                    >
+                      {{ item.resumen.porcentaje }}%
+                    </span>
+                  } @else {
+                    <span class="asistencia-badge asistencia-sin-datos">—</span>
+                  }
                   <ion-icon
-                    [name]="isSelected(a.id) ? 'checkbox-outline' : 'square-outline'"
+                    [name]="isSelected(item.alumno.id) ? 'checkbox-outline' : 'square-outline'"
                     class="check-icon"
-                    [color]="isSelected(a.id) ? 'primary' : 'medium'"
+                    [color]="isSelected(item.alumno.id) ? 'primary' : 'medium'"
                   ></ion-icon>
                 </div>
               }

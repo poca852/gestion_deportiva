@@ -27,6 +27,15 @@
 }
 
 // ---------------------------------------------------------------------------
+// Plantilla hint
+// ---------------------------------------------------------------------------
+.plantilla-hint {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+// ---------------------------------------------------------------------------
 // Plantilla actions
 // ---------------------------------------------------------------------------
 .plantilla-actions {
@@ -110,14 +119,55 @@
   flex-shrink: 0;
 }
 
-.alumno-check-nombre {
+.alumno-check-info {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alumno-check-nombre {
   font-size: 0.9rem;
   font-weight: 500;
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.alumno-check-detalle {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}
+
+.asistencia-badge {
+  flex-shrink: 0;
+  min-width: 44px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+
+  &.asistencia-alta {
+    background: rgba(var(--ion-color-success-rgb), 0.15);
+    color: var(--ion-color-success-shade);
+  }
+
+  &.asistencia-media {
+    background: rgba(var(--ion-color-warning-rgb), 0.15);
+    color: var(--ion-color-warning-shade);
+  }
+
+  &.asistencia-baja {
+    background: rgba(var(--ion-color-danger-rgb), 0.15);
+    color: var(--ion-color-danger-shade);
+  }
+
+  &.asistencia-sin-datos {
+    background: var(--ion-color-light);
+    color: var(--ion-color-medium);
+  }
 }
 
 .check-icon {

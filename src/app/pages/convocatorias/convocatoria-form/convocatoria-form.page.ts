@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import {
   IonBackButton,
   IonButton,
@@ -29,9 +30,16 @@ import {
 } from 'ionicons/icons';
 import { AuthService } from '../../../services/auth.service';
 import { AlumnosService } from '../../../services/alumnos.service';
+import { AsistenciasService } from '../../../services/asistencias.service';
 import { ConvocatoriasService } from '../../../services/convocatorias.service';
 import { Alumno } from '../../../interfaces/alumno.interface';
+import { ResumenAsistenciaAlumno } from '../../../interfaces/sesion-entrenamiento.interface';
 import { CategoriaService } from '../../../services/categoria.service';
+
+interface AlumnoPlantilla {
+  alumno: Alumno;
+  resumen: ResumenAsistenciaAlumno | null;
+}
 
 @Component({
   selector: 'app-convocatoria-form',
@@ -62,13 +70,14 @@ export class ConvocatoriaFormPage implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly alumnosService = inject(AlumnosService);
+  private readonly asistenciasService = inject(AsistenciasService);
   private readonly convocatoriasService = inject(ConvocatoriasService);
   private readonly categoriaService = inject(CategoriaService);
   private readonly toastCtrl = inject(ToastController);
 
   convocatoriaId: string | null = null;
   categorias: string[] = [];
-  alumnos: Alumno[] = [];
+  alumnosPlantilla: AlumnoPlantilla[] = [];
   selectedIds = new Set<string>();
   loading = false;
   loadingAlumnos = false;
@@ -154,22 +163,21 @@ export class ConvocatoriaFormPage implements OnInit {
   loadAlumnos(categoria: string): void {
     const filter = this.authService.getListCategoriaFilter();
     if (filter === undefined) {
-      this.alumnos = [];
+      this.alumnosPlantilla = [];
       this.loadingAlumnos = false;
       return;
     }
 
     const epoch = this.authService.getDataEpoch();
     this.loadingAlumnos = true;
-    this.alumnos = [];
+    this.alumnosPlantilla = [];
 
     this.alumnosService.getAll(categoria).subscribe({
       next: (data) => {
         if (epoch !== this.authService.getDataEpoch()) {
           return;
         }
-        this.alumnos = data;
-        this.loadingAlumnos = false;
+        this.loadAsistenciaResumenes(data, epoch);
       },
       error: () => {
         if (epoch !== this.authService.getDataEpoch()) {
@@ -178,6 +186,63 @@ export class ConvocatoriaFormPage implements OnInit {
         this.loadingAlumnos = false;
       },
     });
+  }
+
+  private loadAsistenciaResumenes(alumnos: Alumno[], epoch: number): void {
+    if (alumnos.length === 0) {
+      this.alumnosPlantilla = [];
+      this.loadingAlumnos = false;
+      return;
+    }
+
+    const requests = alumnos.map((alumno) =>
+      this.asistenciasService.getResumenAlumno(alumno.id).pipe(
+        map((resumen) => ({ alumno, resumen })),
+        catchError(() => of({ alumno, resumen: null }))
+      )
+    );
+
+    forkJoin(requests).subscribe({
+      next: (items) => {
+        if (epoch !== this.authService.getDataEpoch()) {
+          return;
+        }
+        this.alumnosPlantilla = items.sort((a, b) => this.comparePorAsistencia(a, b));
+        this.loadingAlumnos = false;
+      },
+      error: () => {
+        if (epoch !== this.authService.getDataEpoch()) {
+          return;
+        }
+        this.alumnosPlantilla = alumnos
+          .map((alumno) => ({ alumno, resumen: null }))
+          .sort((a, b) => this.comparePorAsistencia(a, b));
+        this.loadingAlumnos = false;
+      },
+    });
+  }
+
+  private comparePorAsistencia(a: AlumnoPlantilla, b: AlumnoPlantilla): number {
+    const pctA = a.resumen?.porcentaje ?? 0;
+    const pctB = b.resumen?.porcentaje ?? 0;
+    if (pctB !== pctA) {
+      return pctB - pctA;
+    }
+    const apellidos = a.alumno.apellidos.localeCompare(b.alumno.apellidos, 'es');
+    if (apellidos !== 0) {
+      return apellidos;
+    }
+    return a.alumno.nombres.localeCompare(b.alumno.nombres, 'es');
+  }
+
+  getAsistenciaClass(porcentaje: number): string {
+    if (porcentaje >= 80) {
+      return 'asistencia-alta';
+    }
+    if (porcentaje >= 60) {
+      return 'asistencia-media';
+    }
+    return 'asistencia-baja';
   }
 
   toggleAlumno(id: string, checked: boolean): void {
@@ -193,7 +258,7 @@ export class ConvocatoriaFormPage implements OnInit {
   }
 
   selectAll(): void {
-    this.alumnos.forEach((a) => this.selectedIds.add(a.id));
+    this.alumnosPlantilla.forEach((item) => this.selectedIds.add(item.alumno.id));
   }
 
   deselectAll(): void {
