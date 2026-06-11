@@ -1,0 +1,142 @@
+// Estilos compartidos entre páginas de impresión/exportación (listado alumnos, convocatorias)
+
+.print-document {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  background: #fff;
+  color: #000;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.export-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 24px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.export-secondary {
+  display: flex;
+  gap: 12px;
+
+  ion-button {
+    flex: 1;
+  }
+}
+
+.action-btn {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  min-height: 50px;
+  --border-radius: 12px;
+  text-transform: none;
+}
+
+.pdf-btn {
+  --background: #e74c3c;
+  --color: #fff;
+  --box-shadow: 0 4px 14px rgba(231, 76, 60, 0.3);
+}
+
+.image-btn {
+  --background: #2ecc71;
+  --color: #fff;
+  --box-shadow: 0 4px 14px rgba(46, 204, 113, 0.3);
+}
+
+.print-btn {
+  --background: #3498db;
+  --color: #fff;
+  --box-shadow: 0 4px 14px rgba(52, 152, 219, 0.3);
+}
+
+.signature-section {
+  h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .signature-hint {
+    margin: 0 0 12px;
+    font-size: 0.875rem;
+    color: var(--ion-color-medium);
+  }
+
+  .save-signature-btn {
+    margin-top: 12px;
+  }
+}
+
+.doc-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 48px;
+  padding-top: 24px;
+
+  .signature-line,
+  .line {
+    border-top: 1px solid #000;
+    margin-bottom: 8px;
+    min-height: 64px;
+  }
+
+  .firma-img,
+  .sello-img {
+    display: block;
+    max-width: 100%;
+    max-height: 80px;
+    margin: 0 auto 8px;
+    object-fit: contain;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #666;
+  }
+}
+
+@media (max-width: 576px) {
+  .print-document {
+    padding: 20px 16px;
+  }
+
+  .doc-footer {
+    flex-direction: column;
+    gap: 32px;
+    align-items: stretch;
+  }
+}
+
+@media print {
+  ion-content {
+    --background: #fff;
+  }
+
+  ion-content::part(scroll) {
+    overflow: visible !important;
+  }
+
+  .print-document {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .club-logo,
+  .sello-img,
+  .firma-img {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  @page {
+    margin: 1.5cm;
+    size: A4 portrait;
+  }
+}

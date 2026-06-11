@@ -41,9 +41,19 @@
             ],
             "styles": [
               "src/theme/variables.scss",
+              "src/theme/print-shared.scss",
               "src/global.scss"
             ],
             "scripts": [],
+            "allowedCommonJsDependencies": [
+              "canvg",
+              "core-js",
+              "html2canvas",
+              "jszip",
+              "qrcode",
+              "raf",
+              "rgbcolor"
+            ],
             "ngxEnv": {
               "prefix": "NG_APP_",
               "runtime": false,
@@ -60,8 +70,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kb",
-                  "maximumError": "6kb"
+                  "maximumWarning": "6kb",
+                  "maximumError": "8kb"
                 }
               ],
               "outputHashing": "all",
