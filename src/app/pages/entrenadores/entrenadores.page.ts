@@ -179,6 +179,10 @@ export class EntrenadoresPage implements OnInit {
 
   closeModal(): void {
     this.modalOpen = false;
+    this.editingId = null;
+    this.form.reset({ rol: 'coach', categorias_asignadas: [] });
+    this.form.controls.password.clearValidators();
+    this.form.controls.password.updateValueAndValidity();
   }
 
   save(): void {
@@ -206,7 +210,7 @@ export class EntrenadoresPage implements OnInit {
     request$.subscribe({
       next: async () => {
         this.saving = false;
-        this.modalOpen = false;
+        this.closeModal();
         this.loadEntrenadores();
         await this.showToast('Entrenador guardado correctamente', 'success');
       },

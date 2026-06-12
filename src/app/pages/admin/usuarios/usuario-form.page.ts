@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -209,7 +209,8 @@ import { isValidEmail } from '../../../utils/email-validation.util';
     </ion-content>
   `,
 })
-export class UsuarioFormPage implements OnInit {
+export class UsuarioFormPage {
+  private loadedUsuarioId: string | null = null;
   private readonly entrenadoresService = inject(EntrenadoresService);
   private readonly academiaService = inject(AcademiaService);
   private readonly supabaseService = inject(SupabaseService);
@@ -262,15 +263,40 @@ export class UsuarioFormPage implements OnInit {
     addIcons({ saveOutline, keyOutline, sendOutline, lockClosedOutline });
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.cargarAcademias();
+  ionViewWillEnter(): void {
+    void this.cargarAcademias();
 
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
+    if (!id) {
+      this.resetForNewUsuario();
+      this.loadedUsuarioId = null;
+      return;
+    }
+
+    if (id !== this.loadedUsuarioId) {
       this.esEdicion = true;
       this.usuarioId = id;
-      await this.cargarUsuario(id);
+      void this.cargarUsuario(id);
+      this.loadedUsuarioId = id;
     }
+  }
+
+  private resetForNewUsuario(): void {
+    this.esEdicion = false;
+    this.usuarioId = null;
+    this.academiaIdOriginal = null;
+    this.guardando = false;
+    this.cargandoDatos = false;
+    this.reseteandoPassword = false;
+    this.correoTocado = false;
+    this.error = '';
+    this.form = {
+      nombre: '',
+      correo: '',
+      password: '',
+      rol: 'coach',
+      academia_id: null,
+    };
   }
 
   private async cargarAcademias(): Promise<void> {
@@ -393,6 +419,11 @@ export class UsuarioFormPage implements OnInit {
           color: 'success',
         });
         await toast.present();
+      }
+
+      if (!this.esEdicion) {
+        this.resetForNewUsuario();
+        this.loadedUsuarioId = null;
       }
 
       await this.router.navigate(['/admin/usuarios']);

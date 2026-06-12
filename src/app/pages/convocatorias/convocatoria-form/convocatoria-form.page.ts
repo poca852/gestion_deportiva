@@ -65,6 +65,7 @@ interface AlumnoPlantilla {
   ],
 })
 export class ConvocatoriaFormPage implements OnInit {
+  private loadedConvocatoriaId: string | null = null;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -101,20 +102,10 @@ export class ConvocatoriaFormPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.convocatoriaId = this.route.snapshot.paramMap.get('id');
-
     if (this.authService.isAdmin()) {
       this.categorias = [...this.categoriaService.getAll()];
     } else {
       this.categorias = [...this.authService.categoriasAsignadas()];
-      if (this.categorias.length === 1) {
-        const cat = this.categorias[0];
-        this.form.patchValue({ categoria: cat }, { emitEvent: false });
-        this.form.controls.categoria.disable();
-        if (!this.convocatoriaId) {
-          this.loadAlumnos(cat);
-        }
-      }
     }
 
     this.form.controls.categoria.valueChanges.subscribe((cat) => {
@@ -123,10 +114,53 @@ export class ConvocatoriaFormPage implements OnInit {
         this.loadAlumnos(cat);
       }
     });
+  }
 
-    if (this.convocatoriaId) {
-      this.loadConvocatoria(this.convocatoriaId);
+  ionViewWillEnter(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.convocatoriaId = id;
+
+    if (!id) {
+      this.resetForNewConvocatoria();
+      this.loadedConvocatoriaId = null;
+      return;
     }
+
+    if (id !== this.loadedConvocatoriaId) {
+      this.clearFormState();
+      this.loadConvocatoria(id);
+      this.loadedConvocatoriaId = id;
+    }
+  }
+
+  private clearFormState(): void {
+    this.saving = false;
+    this.loading = false;
+    this.loadingAlumnos = false;
+    this.selectedIds.clear();
+    this.alumnosPlantilla = [];
+    this.form.controls.categoria.enable({ emitEvent: false });
+    this.form.reset({
+      nombre_evento: '',
+      fecha: '',
+      categoria: '',
+    });
+  }
+
+  private resetForNewConvocatoria(): void {
+    this.clearFormState();
+    this.applyCoachCategoriaDefaults();
+  }
+
+  private applyCoachCategoriaDefaults(): void {
+    if (this.authService.isAdmin() || this.categorias.length !== 1) {
+      return;
+    }
+
+    const cat = this.categorias[0];
+    this.form.patchValue({ categoria: cat }, { emitEvent: false });
+    this.form.controls.categoria.disable({ emitEvent: false });
+    this.loadAlumnos(cat);
   }
 
   private loadConvocatoria(id: string): void {
@@ -297,6 +331,11 @@ export class ConvocatoriaFormPage implements OnInit {
           color: 'success',
         });
         await toast.present();
+
+        if (!this.convocatoriaId) {
+          this.resetForNewConvocatoria();
+          this.loadedConvocatoriaId = null;
+        }
 
         if (this.convocatoriaId) {
           await this.router.navigate(['/app/convocatorias']);

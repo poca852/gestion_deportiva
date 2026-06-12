@@ -70,6 +70,7 @@ import { SupabaseService } from '../../../services/supabase.service';
   ],
 })
 export class AlumnoFormPage implements OnInit {
+  private loadedAlumnoId: string | null = null;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -135,7 +136,6 @@ export class AlumnoFormPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.alumnoId = this.route.snapshot.paramMap.get('id');
     if (this.authService.isAdmin()) {
       this.categorias = [...this.categoriaService.getAll()];
     } else {
@@ -144,96 +144,158 @@ export class AlumnoFormPage implements OnInit {
         asignadas.length > 0 ? [...asignadas] : [...this.categoriaService.getAll()];
     }
 
-    if (!this.alumnoId) {
-      // Nuevo registro: pre-fill fecha de ingreso con hoy
-      const hoy = new Date().toISOString().split('T')[0];
-      this.form.patchValue({ fecha_ingreso: hoy });
-    }
     this.form.controls.fecha_nacimiento.valueChanges.subscribe((fecha) => {
       if (fecha) {
         this.categoriaRecomendada = this.categoriaService.calcularCategoria(fecha);
         if (!this.form.controls.categoria.dirty) {
           this.form.patchValue({ categoria: this.categoriaRecomendada });
         }
+      } else {
+        this.categoriaRecomendada = '';
       }
     });
+  }
 
-    if (this.alumnoId) {
-      this.loadingAlumno = true;
-      this.alumnosService.getById(this.alumnoId).subscribe({
-        next: async (alumno) => {
-          this.form.patchValue({
-            nombres: alumno.nombres,
-            apellidos: alumno.apellidos,
-            fecha_nacimiento: alumno.fecha_nacimiento,
-            genero: alumno.genero,
-            nombre_tutor: alumno.nombre_tutor,
-            telefono_tutor: alumno.telefono_tutor,
-            categoria: alumno.categoria,
-            nivel: alumno.nivel ?? '',
-            talla_camiseta: alumno.talla_camiseta ?? '',
-            fecha_ingreso: alumno.fecha_ingreso ?? '',
-            foto_estudiante_url: alumno.foto_estudiante_url ?? '',
-            foto_documento_url: alumno.foto_documento_url ?? '',
-            foto_documento_padre_url: alumno.foto_documento_padre_url ?? '',
-          });
-          // Capturar updated_at para optimistic locking
-          this.alumnoUpdatedAt = alumno.updated_at ?? null;
-          this.categoriaRecomendada = this.categoriaService.calcularCategoria(
-            alumno.fecha_nacimiento
-          );
-          this.loadingAlumno = false;
+  ionViewWillEnter(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.alumnoId = id;
 
-          if (alumno.foto_estudiante_url) {
-            this.loadingFotoEstudiante = true;
-            try {
-              this.fotoEstudiantePreview = await this.supabaseService.resolveFileUrl(
-                alumno.foto_estudiante_url
-              );
-            } catch {
-              this.fotoEstudiantePreview = null;
-            } finally {
-              this.loadingFotoEstudiante = false;
-            }
+    if (!id) {
+      this.resetForNewAlumno();
+      this.loadedAlumnoId = null;
+      return;
+    }
+
+    if (id !== this.loadedAlumnoId) {
+      this.clearMediaState();
+      this.loadAlumno(id);
+      this.loadedAlumnoId = id;
+    }
+  }
+
+  private resetForNewAlumno(): void {
+    this.clearMediaState();
+    this.alumnoUpdatedAt = null;
+    this.saving = false;
+    this.loadingAlumno = false;
+    this.categoriaRecomendada = '';
+
+    const hoy = new Date().toISOString().split('T')[0];
+    this.form.reset({
+      nombres: '',
+      apellidos: '',
+      fecha_nacimiento: '',
+      genero: 'masculino',
+      nombre_tutor: '',
+      telefono_tutor: '',
+      categoria: '',
+      nivel: '',
+      talla_camiseta: '',
+      fecha_ingreso: hoy,
+      foto_estudiante_url: '',
+      foto_documento_url: '',
+      foto_documento_padre_url: '',
+    });
+  }
+
+  private clearMediaState(): void {
+    this.revokeBlobUrl(this.fotoEstudiantePreview);
+    this.revokeBlobUrl(this.fotoDocumentoPreview);
+    this.revokeBlobUrl(this.fotoDocumentoPadrePreview);
+
+    this.fotoEstudianteFile = null;
+    this.fotoDocumentoFile = null;
+    this.fotoDocumentoPadreFile = null;
+    this.fotoEstudiantePreview = null;
+    this.fotoDocumentoPreview = null;
+    this.fotoDocumentoPadrePreview = null;
+    this.documentoEsPdf = false;
+    this.documentoPadreEsPdf = false;
+    this.loadingFotoEstudiante = false;
+    this.loadingFotoDocumento = false;
+    this.loadingFotoDocumentoPadre = false;
+  }
+
+  private revokeBlobUrl(url: string | null): void {
+    if (url?.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  private loadAlumno(id: string): void {
+    this.loadingAlumno = true;
+    this.alumnosService.getById(id).subscribe({
+      next: async (alumno) => {
+        this.form.reset({
+          nombres: alumno.nombres,
+          apellidos: alumno.apellidos,
+          fecha_nacimiento: alumno.fecha_nacimiento,
+          genero: alumno.genero,
+          nombre_tutor: alumno.nombre_tutor,
+          telefono_tutor: alumno.telefono_tutor,
+          categoria: alumno.categoria,
+          nivel: alumno.nivel ?? '',
+          talla_camiseta: alumno.talla_camiseta ?? '',
+          fecha_ingreso: alumno.fecha_ingreso ?? '',
+          foto_estudiante_url: alumno.foto_estudiante_url ?? '',
+          foto_documento_url: alumno.foto_documento_url ?? '',
+          foto_documento_padre_url: alumno.foto_documento_padre_url ?? '',
+        });
+        this.alumnoUpdatedAt = alumno.updated_at ?? null;
+        this.categoriaRecomendada = this.categoriaService.calcularCategoria(
+          alumno.fecha_nacimiento
+        );
+        this.loadingAlumno = false;
+
+        if (alumno.foto_estudiante_url) {
+          this.loadingFotoEstudiante = true;
+          try {
+            this.fotoEstudiantePreview = await this.supabaseService.resolveFileUrl(
+              alumno.foto_estudiante_url
+            );
+          } catch {
+            this.fotoEstudiantePreview = null;
+          } finally {
+            this.loadingFotoEstudiante = false;
           }
+        }
 
-          if (alumno.foto_documento_url) {
-            this.documentoEsPdf = this.supabaseService.isPdfStored(
+        if (alumno.foto_documento_url) {
+          this.documentoEsPdf = this.supabaseService.isPdfStored(
+            alumno.foto_documento_url
+          );
+          this.loadingFotoDocumento = true;
+          try {
+            this.fotoDocumentoPreview = await this.supabaseService.resolveFileUrl(
               alumno.foto_documento_url
             );
-            this.loadingFotoDocumento = true;
-            try {
-              this.fotoDocumentoPreview = await this.supabaseService.resolveFileUrl(
-                alumno.foto_documento_url
-              );
-            } catch {
-              this.fotoDocumentoPreview = null;
-            } finally {
-              this.loadingFotoDocumento = false;
-            }
+          } catch {
+            this.fotoDocumentoPreview = null;
+          } finally {
+            this.loadingFotoDocumento = false;
           }
+        }
 
-          if (alumno.foto_documento_padre_url) {
-            this.documentoPadreEsPdf = this.supabaseService.isPdfStored(
+        if (alumno.foto_documento_padre_url) {
+          this.documentoPadreEsPdf = this.supabaseService.isPdfStored(
+            alumno.foto_documento_padre_url
+          );
+          this.loadingFotoDocumentoPadre = true;
+          try {
+            this.fotoDocumentoPadrePreview = await this.supabaseService.resolveFileUrl(
               alumno.foto_documento_padre_url
             );
-            this.loadingFotoDocumentoPadre = true;
-            try {
-              this.fotoDocumentoPadrePreview = await this.supabaseService.resolveFileUrl(
-                alumno.foto_documento_padre_url
-              );
-            } catch {
-              this.fotoDocumentoPadrePreview = null;
-            } finally {
-              this.loadingFotoDocumentoPadre = false;
-            }
+          } catch {
+            this.fotoDocumentoPadrePreview = null;
+          } finally {
+            this.loadingFotoDocumentoPadre = false;
           }
-        },
-        error: () => {
-          this.loadingAlumno = false;
-        },
-      });
-    }
+        }
+      },
+      error: () => {
+        this.loadingAlumno = false;
+      },
+    });
   }
 
   // ──────────────────────────────────────
@@ -513,6 +575,10 @@ export class AlumnoFormPage implements OnInit {
         color: 'success',
       });
       await toast.present();
+      if (!this.alumnoId) {
+        this.resetForNewAlumno();
+        this.loadedAlumnoId = null;
+      }
       await this.router.navigate(['/app/alumnos']);
     } catch (err) {
       this.saving = false;

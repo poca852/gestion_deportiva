@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -132,7 +132,8 @@ import { firstValueFrom } from 'rxjs';
     `,
   ],
 })
-export class AcademiaFormPage implements OnInit {
+export class AcademiaFormPage {
+  private loadedAcademiaId: string | null = null;
   private readonly academiaService = inject(AcademiaService);
   private readonly entrenadoresService = inject(EntrenadoresService);
   private readonly router = inject(Router);
@@ -156,13 +157,36 @@ export class AcademiaFormPage implements OnInit {
     addIcons({ saveOutline, personCircleOutline });
   }
 
-  async ngOnInit(): Promise<void> {
+  ionViewWillEnter(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
+
+    if (!id) {
+      this.resetForNewAcademia();
+      this.loadedAcademiaId = null;
+      return;
+    }
+
+    if (id !== this.loadedAcademiaId) {
       this.esEdicion = true;
       this.academiaId = id;
-      await this.cargarAcademia(id);
+      void this.cargarAcademia(id);
+      this.loadedAcademiaId = id;
     }
+  }
+
+  private resetForNewAcademia(): void {
+    this.esEdicion = false;
+    this.academiaId = null;
+    this.guardando = false;
+    this.cargandoDatos = false;
+    this.error = '';
+    this.adminAsignado = null;
+    this.form = {
+      nombre: '',
+      direccion: '',
+      logo_url: null,
+      sello_url: null,
+    };
   }
 
   private async cargarAcademia(id: string): Promise<void> {
@@ -230,6 +254,11 @@ export class AcademiaFormPage implements OnInit {
           color: 'success',
         });
         await toast.present();
+      }
+
+      if (!this.esEdicion) {
+        this.resetForNewAcademia();
+        this.loadedAcademiaId = null;
       }
 
       await this.router.navigate(['/admin/academias']);
