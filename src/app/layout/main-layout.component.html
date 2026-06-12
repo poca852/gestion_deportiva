@@ -49,13 +49,14 @@
 
       <ion-list lines="none">
         @if (isSuperAdminLayout) {
-          <ion-menu-toggle auto-hide="false">
-            <ion-item
-              routerLink="/admin/academias"
-              routerLinkActive="selected"
-              button
-              detail="false"
-            >
+            <ion-menu-toggle auto-hide="false">
+              <ion-item
+                routerLink="/admin/academias"
+                routerDirection="root"
+                routerLinkActive="selected"
+                button
+                detail="false"
+              >
               <ion-icon name="business-outline" slot="start"></ion-icon>
               <ion-label>Academias</ion-label>
             </ion-item>
@@ -65,6 +66,7 @@
             <ion-menu-toggle auto-hide="false">
               <ion-item
                 [routerLink]="item.url"
+                routerDirection="root"
                 routerLinkActive="selected"
                 (click)="closeMenu()"
                 button
@@ -85,7 +87,5 @@
     </ion-content>
   </ion-menu>
 
-  <div id="main-content" class="ion-page">
-    <ion-router-outlet></ion-router-outlet>
-  </div>
+  <ion-router-outlet id="main-content"></ion-router-outlet>
 </ion-split-pane>

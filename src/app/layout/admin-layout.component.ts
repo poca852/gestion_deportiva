@@ -70,6 +70,7 @@ import { AuthService } from '../services/auth.service';
             <ion-menu-toggle auto-hide="false">
               <ion-item
                 routerLink="/admin/academias"
+                routerDirection="root"
                 routerLinkActive="selected"
                 button
                 detail="false"
@@ -82,6 +83,7 @@ import { AuthService } from '../services/auth.service';
             <ion-menu-toggle auto-hide="false">
               <ion-item
                 routerLink="/admin/usuarios"
+                routerDirection="root"
                 routerLinkActive="selected"
                 button
                 detail="false"
@@ -99,9 +101,7 @@ import { AuthService } from '../services/auth.service';
         </ion-content>
       </ion-menu>
 
-      <div id="admin-content" class="ion-page">
-        <ion-router-outlet></ion-router-outlet>
-      </div>
+      <ion-router-outlet id="admin-content"></ion-router-outlet>
     </ion-split-pane>
   `,
   styles: [

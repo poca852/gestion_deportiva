@@ -32,4 +32,14 @@
   --app-radius-sm: 8px;
   --app-radius-md: 12px;
   --app-page-padding: 16px;
+
+  --ion-background-color: #ffffff;
+  --ion-text-color: #1e293b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-background-color: #121212;
+    --ion-text-color: #f1f5f9;
+  }
 }

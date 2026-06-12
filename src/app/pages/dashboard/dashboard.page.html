@@ -67,7 +67,7 @@
     </div>
     <div class="quick-actions-grid">
       @for (action of quickActions; track action.title) {
-        <a [routerLink]="action.url" class="quick-action-card" [style.--qa-color]="'var(--ion-color-' + action.color + ')'">
+        <a [routerLink]="action.url" routerDirection="root" class="quick-action-card" [style.--qa-color]="'var(--ion-color-' + action.color + ')'">
           <div class="qa-icon-wrapper" [style.background]="'rgba(var(--ion-color-' + action.color + '-rgb), 0.1)'">
             <ion-icon [name]="action.icon" class="qa-icon" [style.color]="'var(--ion-color-' + action.color + ')'"></ion-icon>
           </div>

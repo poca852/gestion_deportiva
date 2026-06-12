@@ -36,6 +36,12 @@
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
 
+// Fondo opaco en cada vista — evita ver la pantalla anterior en transiciones
+// sin forzar estilos que rompen ion-content en Android/Web.
+ion-router-outlet > .ion-page {
+  background: var(--ion-background-color);
+}
+
 // ---------------------------------------------------------------------------
 // Utilidades globales
 // ---------------------------------------------------------------------------

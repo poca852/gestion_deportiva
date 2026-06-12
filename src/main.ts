@@ -6,7 +6,10 @@ import { routes } from './app/app.routes';
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideIonicAngular({ mode: 'ios' }),
+    provideIonicAngular({
+      mode: 'md',
+      backButtonText: 'Atrás',
+    }),
     provideRouter(routes, withPreloading(PreloadAllModules)),
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
   ],
