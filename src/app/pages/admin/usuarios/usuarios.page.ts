@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, TitleCasePipe } from '@angular/common';
 import {
   IonHeader,
   IonToolbar,
@@ -9,8 +9,6 @@ import {
   IonMenuButton,
   IonButton,
   IonContent,
-  IonCard,
-  IonCardContent,
   IonIcon,
   IonSpinner,
   IonList,
@@ -25,11 +23,7 @@ import { addIcons } from 'ionicons';
 import {
   add,
   personAddOutline,
-  createOutline,
-  trashOutline,
   peopleOutline,
-  personOutline,
-  businessOutline,
 } from 'ionicons/icons';
 import { EntrenadoresService } from '../../../services/entrenadores.service';
 import { AcademiaService } from '../../../services/academia.service';
@@ -42,6 +36,7 @@ import { firstValueFrom } from 'rxjs';
   standalone: true,
   imports: [
     CommonModule,
+    TitleCasePipe,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -49,8 +44,6 @@ import { firstValueFrom } from 'rxjs';
     IonMenuButton,
     IonButton,
     IonContent,
-    IonCard,
-    IonCardContent,
     IonIcon,
     IonSpinner,
     IonList,
@@ -75,50 +68,50 @@ import { firstValueFrom } from 'rxjs';
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding">
+    <ion-content>
       <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
         <ion-refresher-content></ion-refresher-content>
       </ion-refresher>
 
       @if (loading) {
-        <div class="ion-text-center ion-padding">
-          <ion-spinner></ion-spinner>
+        <div class="loading-center">
+          <ion-spinner name="crescent"></ion-spinner>
         </div>
       } @else if (usuarios.length === 0) {
-        <ion-card>
-          <ion-card-content class="ion-text-center ion-padding">
-            <ion-icon name="people-outline" size="large" color="medium"></ion-icon>
-            <h3 class="ion-margin-top">No hay usuarios registrados</h3>
-            <p class="ion-margin-bottom">Crea el primer usuario para comenzar.</p>
-            <ion-button expand="block" (click)="nuevoUsuario()">
-              <ion-icon name="person-add-outline" slot="start"></ion-icon>
-              Crear usuario
-            </ion-button>
-          </ion-card-content>
-        </ion-card>
+        <div class="empty-state ion-padding">
+          <ion-icon name="people-outline" class="empty-icon" color="medium"></ion-icon>
+          <h3 class="empty-title">No hay usuarios registrados</h3>
+          <p class="empty-subtitle">Crea el primer usuario para comenzar.</p>
+          <ion-button (click)="nuevoUsuario()">
+            <ion-icon name="person-add-outline" slot="start"></ion-icon>
+            Crear usuario
+          </ion-button>
+        </div>
       } @else {
-        <ion-list>
+        <ion-list class="page-list modern-list" lines="none">
           @for (usuario of usuarios; track usuario.id) {
-            <ion-item button detail (click)="editarUsuario(usuario)">
-              <ion-label>
-                <h2>{{ usuario.nombre }}</h2>
-                <p>{{ usuario.correo }}</p>
-              </ion-label>
-              <div slot="end" class="usuario-tags">
-                <ion-chip [color]="usuario.rol === 'admin' ? 'primary' : 'medium'" size="small">
-                  <ion-icon name="person-outline"></ion-icon>
-                  {{ usuario.rol === 'admin' ? 'Admin' : 'Coach' }}
-                </ion-chip>
-                @if (getAcademiaNombre(usuario.academia_id); as nombreAcademia) {
-                  <ion-chip color="tertiary" size="small">
-                    <ion-icon name="business-outline"></ion-icon>
-                    {{ nombreAcademia }}
-                  </ion-chip>
-                }
-                @if (!usuario.academia_id) {
-                  <ion-chip color="warning" size="small">Sin academia</ion-chip>
-                }
+            <ion-item button detail (click)="editarUsuario(usuario)" class="usuario-item">
+              <div class="usuario-avatar" slot="start">
+                <div class="avatar-placeholder">{{ getInitials(usuario.nombre) }}</div>
               </div>
+              <ion-label>
+                <h2>{{ usuario.nombre | titlecase }}</h2>
+                <p class="usuario-correo">{{ usuario.correo }}</p>
+                <div class="usuario-meta">
+                  <ion-chip
+                    [color]="usuario.rol === 'admin' ? 'primary' : 'medium'"
+                    class="meta-chip"
+                  >
+                    {{ usuario.rol === 'admin' ? 'Admin' : 'Coach' }}
+                  </ion-chip>
+                  @if (getAcademiaNombre(usuario.academia_id); as nombreAcademia) {
+                    <ion-chip color="tertiary" class="meta-chip">{{ nombreAcademia }}</ion-chip>
+                  }
+                  @if (!usuario.academia_id) {
+                    <ion-chip color="warning" class="meta-chip">Sin academia</ion-chip>
+                  }
+                </div>
+              </ion-label>
             </ion-item>
           }
         </ion-list>
@@ -127,10 +120,93 @@ import { firstValueFrom } from 'rxjs';
   `,
   styles: [
     `
-      .usuario-tags {
+      .modern-list {
+        margin: 0;
+      }
+
+      .usuario-item {
+        --padding-start: 16px;
+        --padding-end: 12px;
+        --padding-top: 10px;
+        --padding-bottom: 10px;
+
+        h2 {
+          font-weight: 600;
+          font-size: 1rem;
+          margin-bottom: 2px;
+        }
+
+        .usuario-correo {
+          font-size: 0.85rem;
+          color: var(--ion-color-medium);
+          margin-bottom: 6px;
+        }
+
+        .usuario-meta {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+      }
+
+      .usuario-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      .avatar-placeholder {
+        width: 100%;
+        height: 100%;
         display: flex;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        background: linear-gradient(
+          145deg,
+          var(--ion-color-primary) 0%,
+          var(--ion-color-primary-tint) 100%
+        );
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 0.02em;
+      }
+
+      .meta-chip {
+        margin: 0;
+        height: 24px;
+        font-size: 0.7rem;
+        --padding-start: 8px;
+        --padding-end: 8px;
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 64px 24px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+      }
+
+      .empty-title {
+        margin: 0 0 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .empty-subtitle {
+        margin: 0 0 24px;
+        font-size: 0.9rem;
+        color: var(--ion-color-medium);
       }
     `,
   ],
@@ -145,7 +221,7 @@ export class UsuariosPage {
   loading = true;
 
   constructor() {
-    addIcons({ add, personAddOutline, createOutline, trashOutline, peopleOutline, personOutline, businessOutline });
+    addIcons({ add, personAddOutline, peopleOutline });
   }
 
   ionViewWillEnter(): void {
@@ -168,6 +244,14 @@ export class UsuariosPage {
     } finally {
       this.loading = false;
     }
+  }
+
+  getInitials(nombre: string): string {
+    const parts = nombre.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+    return nombre.charAt(0).toUpperCase();
   }
 
   getAcademiaNombre(academiaId: string | null): string | null {
