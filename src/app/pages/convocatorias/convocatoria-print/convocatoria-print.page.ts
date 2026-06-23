@@ -24,7 +24,6 @@ import { addIcons } from 'ionicons';
 import {
   cloudDownloadOutline,
   imageOutline,
-  printOutline,
 } from 'ionicons/icons';
 import { SignaturePadComponent } from '../../../components/signature-pad/signature-pad.component';
 import { LazyImageComponent } from '../../../components/lazy-image/lazy-image.component';
@@ -35,6 +34,7 @@ import { AcademiaBrandingService } from '../../../services/academia-branding.ser
 import { AuthService } from '../../../services/auth.service';
 import { ConvocatoriaExportService } from '../../../services/convocatoria-export.service';
 import { ConvocatoriasService } from '../../../services/convocatorias.service';
+import { CarnetExportService } from '../../../services/carnet-export.service';
 import { SupabaseService } from '../../../services/supabase.service';
 
 @Component({
@@ -66,6 +66,7 @@ export class ConvocatoriaPrintPage implements OnInit {
   private readonly branding = inject(AcademiaBrandingService);
   private readonly supabaseService = inject(SupabaseService);
   private readonly exportService = inject(ConvocatoriaExportService);
+  private readonly carnetExport = inject(CarnetExportService);
   private readonly authService = inject(AuthService);
   private readonly toastCtrl = inject(ToastController);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -82,9 +83,10 @@ export class ConvocatoriaPrintPage implements OnInit {
   loading = true;
   savingFirma = false;
   exporting = false;
+  exportMessage = '';
 
   constructor() {
-    addIcons({ cloudDownloadOutline, imageOutline, printOutline });
+    addIcons({ cloudDownloadOutline, imageOutline });
   }
 
   ngOnInit(): void {
@@ -136,43 +138,59 @@ export class ConvocatoriaPrintPage implements OnInit {
     });
   }
 
-  imprimir(): void {
-    this.exportService.printWithFilename(this.exportFilename);
-  }
-
   async descargarPdf(): Promise<void> {
+    if (this.exporting) return;
+
     const element = this.printDocumentRef?.nativeElement;
     if (!element) return;
 
-    this.exporting = true;
+    await this.beginExport('Generando PDF, por favor espera...');
+
     try {
-      await this.exportService.downloadPdf(element, this.exportFilename);
+      const result = await this.exportService.downloadPdf(
+        element,
+        this.exportFilename
+      );
+      await this.showExportSuccessToast(
+        result,
+        `${this.exportFilename}.pdf`,
+        'PDF descargado correctamente'
+      );
     } catch (err) {
       await this.showToast(
         err instanceof Error ? err.message : 'No se pudo generar el PDF',
         'danger'
       );
     } finally {
-      this.exporting = false;
-      this.cdr.markForCheck();
+      this.endExport();
     }
   }
 
   async descargarImagen(): Promise<void> {
+    if (this.exporting) return;
+
     const element = this.printDocumentRef?.nativeElement;
     if (!element) return;
 
-    this.exporting = true;
+    await this.beginExport('Generando imagen, por favor espera...');
+
     try {
-      await this.exportService.downloadImage(element, this.exportFilename);
+      const result = await this.exportService.downloadImage(
+        element,
+        this.exportFilename
+      );
+      await this.showExportSuccessToast(
+        result,
+        `${this.exportFilename}.png`,
+        'Imagen descargada correctamente'
+      );
     } catch (err) {
       await this.showToast(
         err instanceof Error ? err.message : 'No se pudo generar la imagen',
         'danger'
       );
     } finally {
-      this.exporting = false;
-      this.cdr.markForCheck();
+      this.endExport();
     }
   }
 
@@ -268,6 +286,31 @@ export class ConvocatoriaPrintPage implements OnInit {
       reader.onerror = () => reject(new Error('No se pudo leer la firma'));
       reader.readAsDataURL(blob);
     });
+  }
+
+  private async beginExport(message: string): Promise<void> {
+    this.exportMessage = message;
+    this.exporting = true;
+    this.cdr.detectChanges();
+    await this.carnetExport.yieldToUi();
+  }
+
+  private endExport(): void {
+    this.exporting = false;
+    this.exportMessage = '';
+    this.cdr.detectChanges();
+  }
+
+  private async showExportSuccessToast(
+    result: 'native' | 'browser',
+    filename: string,
+    browserMessage: string
+  ): Promise<void> {
+    const message =
+      result === 'native'
+        ? `Archivo guardado en Documentos: ${filename}`
+        : browserMessage;
+    await this.showToast(message, 'success');
   }
 
   private async showToast(

@@ -7,6 +7,13 @@
   </ion-toolbar>
 </ion-header>
 
+@if (exporting) {
+  <div class="export-feedback" role="status" aria-live="polite">
+    <ion-spinner name="crescent" class="export-feedback-spinner"></ion-spinner>
+    <p class="export-feedback-text">{{ exportMessage }}</p>
+  </div>
+}
+
 <ion-content>
   <!-- SECCIÓN CONFIGURACIÓN -->
   <section class="config-section no-print">
@@ -227,7 +234,7 @@
     <section class="signature-section no-print">
       <h3>Firma del entrenador</h3>
       <p class="signature-hint">
-        Dibuja tu firma abajo. Aparecerá al imprimir o descargar el reporte.
+        Dibuja tu firma abajo. Aparecerá al descargar el reporte.
       </p>
       <app-signature-pad #signaturePad />
       <ion-button
@@ -261,26 +268,15 @@
           Descargar PDF
         }
       </ion-button>
-      <div class="export-secondary">
-        <ion-button
-          expand="block"
-          class="action-btn image-btn"
-          (click)="descargarImagen()"
-          [disabled]="exporting"
-        >
-          <ion-icon name="image-outline" slot="start"></ion-icon>
-          Descargar imagen
-        </ion-button>
-        <ion-button
-          expand="block"
-          class="action-btn print-btn"
-          (click)="imprimirReporte()"
-          [disabled]="exporting"
-        >
-          <ion-icon name="print-outline" slot="start"></ion-icon>
-          Imprimir
-        </ion-button>
-      </div>
+      <ion-button
+        expand="block"
+        class="action-btn image-btn"
+        (click)="descargarImagen()"
+        [disabled]="exporting"
+      >
+        <ion-icon name="image-outline" slot="start"></ion-icon>
+        Descargar imagen
+      </ion-button>
     </div>
   }
 </ion-content>

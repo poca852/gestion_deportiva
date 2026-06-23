@@ -23,7 +23,6 @@ import {
   filterOutline,
   imageOutline,
   listOutline,
-  printOutline,
   searchOutline,
 } from 'ionicons/icons';
 import { firstValueFrom } from 'rxjs';
@@ -37,6 +36,7 @@ import { AlumnosService } from '../../../services/alumnos.service';
 import { AuthService } from '../../../services/auth.service';
 import { CategoriaService } from '../../../services/categoria.service';
 import { ConvocatoriaExportService } from '../../../services/convocatoria-export.service';
+import { CarnetExportService } from '../../../services/carnet-export.service';
 import { SupabaseService } from '../../../services/supabase.service';
 import { CategoriaFilter } from '../../../utils/categoria-filter.util';
 
@@ -75,6 +75,7 @@ export class AlumnosListadoPrintPage implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly categoriaService = inject(CategoriaService);
   private readonly exportService = inject(ConvocatoriaExportService);
+  private readonly carnetExport = inject(CarnetExportService);
   private readonly branding = inject(AcademiaBrandingService);
   private readonly toastCtrl = inject(ToastController);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -90,6 +91,7 @@ export class AlumnosListadoPrintPage implements OnInit {
   loading = false;
   alumnos: Alumno[] = [];
   exporting = false;
+  exportMessage = '';
   savingFirma = false;
 
   categoriasOptions: string[] = [];
@@ -124,7 +126,6 @@ export class AlumnosListadoPrintPage implements OnInit {
       imageOutline,
       searchOutline,
       listOutline,
-      printOutline,
     });
   }
 
@@ -258,6 +259,8 @@ export class AlumnosListadoPrintPage implements OnInit {
   }
 
   async descargarPdf(): Promise<void> {
+    if (this.exporting) return;
+
     if (this.alumnos.length === 0) {
       const toast = await this.toastCtrl.create({
         message: 'No hay alumnos en el reporte. Primero genera los datos.',
@@ -271,11 +274,16 @@ export class AlumnosListadoPrintPage implements OnInit {
     const element = this.printDocumentRef?.nativeElement;
     if (!element) return;
 
-    this.exporting = true;
+    await this.beginExport('Generando PDF, por favor espera...');
+
     try {
-      await this.exportService.downloadPdf(element, this.filename);
+      const result = await this.exportService.downloadPdf(element, this.filename);
+      const message =
+        result === 'native'
+          ? `Archivo guardado en Documentos: ${this.filename}.pdf`
+          : 'PDF descargado correctamente';
       const toast = await this.toastCtrl.create({
-        message: 'PDF descargado correctamente',
+        message,
         duration: 2000,
         color: 'success',
       });
@@ -288,12 +296,13 @@ export class AlumnosListadoPrintPage implements OnInit {
       });
       await toast.present();
     } finally {
-      this.exporting = false;
-      this.cdr.markForCheck();
+      this.endExport();
     }
   }
 
   async descargarImagen(): Promise<void> {
+    if (this.exporting) return;
+
     if (this.alumnos.length === 0) {
       const toast = await this.toastCtrl.create({
         message: 'No hay alumnos en el reporte. Primero genera los datos.',
@@ -307,11 +316,16 @@ export class AlumnosListadoPrintPage implements OnInit {
     const element = this.printDocumentRef?.nativeElement;
     if (!element) return;
 
-    this.exporting = true;
+    await this.beginExport('Generando imagen, por favor espera...');
+
     try {
-      await this.exportService.downloadImage(element, this.filename);
+      const result = await this.exportService.downloadImage(element, this.filename);
+      const message =
+        result === 'native'
+          ? `Archivo guardado en Documentos: ${this.filename}.png`
+          : 'Imagen descargada correctamente';
       const toast = await this.toastCtrl.create({
-        message: 'Imagen descargada correctamente',
+        message,
         duration: 2000,
         color: 'success',
       });
@@ -324,27 +338,8 @@ export class AlumnosListadoPrintPage implements OnInit {
       });
       await toast.present();
     } finally {
-      this.exporting = false;
-      this.cdr.markForCheck();
+      this.endExport();
     }
-  }
-
-  async imprimirReporte(): Promise<void> {
-    if (this.alumnos.length === 0) {
-      const toast = await this.toastCtrl.create({
-        message: 'No hay datos para imprimir. Primero genera el reporte.',
-        duration: 3000,
-        color: 'warning',
-      });
-      await toast.present();
-      return;
-    }
-
-    this.exportService.printWithFilename(this.filename);
-  }
-
-  get canSign(): boolean {
-    return !!this.authService.currentProfile;
   }
 
   async guardarFirma(): Promise<void> {
@@ -384,6 +379,19 @@ export class AlumnosListadoPrintPage implements OnInit {
       this.savingFirma = false;
       this.cdr.markForCheck();
     }
+  }
+
+  private async beginExport(message: string): Promise<void> {
+    this.exportMessage = message;
+    this.exporting = true;
+    this.cdr.detectChanges();
+    await this.carnetExport.yieldToUi();
+  }
+
+  private endExport(): void {
+    this.exporting = false;
+    this.exportMessage = '';
+    this.cdr.detectChanges();
   }
 
   private blobToDataUrl(blob: Blob): Promise<string> {
