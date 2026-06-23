@@ -1,12 +1,24 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import {
+  PRINT_CAPTURE_SCALE,
+  PRINT_DOCUMENT_CAPTURE_WIDTH_PX,
+  PRINT_PDF_CONTENT_HEIGHT_MM,
+  PRINT_PDF_CONTENT_WIDTH_MM,
+  PRINT_PDF_MARGIN_MM,
+} from '../constants/print.constants';
 import { Convocatoria } from '../interfaces/convocatoria.interface';
+import { CarnetExportService } from './carnet-export.service';
+
+export type ConvocatoriaExportResult = 'native' | 'browser';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConvocatoriaExportService {
+  private readonly carnetExport = inject(CarnetExportService);
+
   buildFilename(convocatoria: Convocatoria): string {
     const slug = (value: string) =>
       value
@@ -19,55 +31,114 @@ export class ConvocatoriaExportService {
     return `convocatoria_${slug(convocatoria.nombre_evento)}_${slug(convocatoria.categoria)}`;
   }
 
-  async downloadPdf(element: HTMLElement, filename: string): Promise<void> {
+  async downloadPdf(
+    element: HTMLElement,
+    filename: string
+  ): Promise<ConvocatoriaExportResult> {
     const canvas = await this.captureElement(element);
-    const imgData = canvas.toDataURL('image/png');
+    const pdfBlob = this.buildPdfBlob(canvas);
+    return this.carnetExport.downloadBlobFile(pdfBlob, `${filename}.pdf`);
+  }
+
+  async downloadImage(
+    element: HTMLElement,
+    filename: string
+  ): Promise<ConvocatoriaExportResult> {
+    const canvas = await this.captureElement(element);
+    const blob = await this.carnetExport.canvasToBlob(canvas);
+    return this.carnetExport.downloadBlobFile(blob, `${filename}.png`);
+  }
+
+  private buildPdfBlob(canvas: HTMLCanvasElement): Blob {
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 10;
-    const maxWidth = pageWidth - margin * 2;
-    const maxHeight = pageHeight - margin * 2;
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    const ratio = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
-    const renderWidth = imgWidth * ratio;
-    const renderHeight = imgHeight * ratio;
-    const offsetX = (pageWidth - renderWidth) / 2;
-    const offsetY = margin;
+    const contentWidthMm = PRINT_PDF_CONTENT_WIDTH_MM;
+    const contentHeightMm = PRINT_PDF_CONTENT_HEIGHT_MM;
+    const marginMm = PRINT_PDF_MARGIN_MM;
+    const pxPerMm = canvas.width / contentWidthMm;
+    const pageSliceHeightPx = contentHeightMm * pxPerMm;
 
-    pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderWidth, renderHeight);
-    pdf.save(`${filename}.pdf`);
+    let offsetYPx = 0;
+    let pageIndex = 0;
+
+    while (offsetYPx < canvas.height) {
+      if (pageIndex > 0) {
+        pdf.addPage();
+      }
+
+      const sliceHeightPx = Math.min(pageSliceHeightPx, canvas.height - offsetYPx);
+      const sliceHeightMm = sliceHeightPx / pxPerMm;
+      const imageData = this.extractCanvasSlice(canvas, offsetYPx, sliceHeightPx);
+
+      pdf.addImage(
+        imageData,
+        'PNG',
+        marginMm,
+        marginMm,
+        contentWidthMm,
+        sliceHeightMm,
+        undefined,
+        'FAST'
+      );
+
+      offsetYPx += sliceHeightPx;
+      pageIndex++;
+    }
+
+    return pdf.output('blob');
   }
 
-  async downloadImage(element: HTMLElement, filename: string): Promise<void> {
-    const canvas = await this.captureElement(element);
-    const link = document.createElement('a');
-    link.download = `${filename}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  }
+  private extractCanvasSlice(
+    source: HTMLCanvasElement,
+    offsetYPx: number,
+    sliceHeightPx: number
+  ): string {
+    if (offsetYPx === 0 && sliceHeightPx >= source.height) {
+      return source.toDataURL('image/png');
+    }
 
-  printWithFilename(filename: string): void {
-    const previousTitle = document.title;
-    document.title = filename;
+    const sliceCanvas = document.createElement('canvas');
+    sliceCanvas.width = source.width;
+    sliceCanvas.height = sliceHeightPx;
 
-    const restoreTitle = () => {
-      document.title = previousTitle;
-      window.removeEventListener('afterprint', restoreTitle);
-    };
+    const context = sliceCanvas.getContext('2d');
+    if (!context) {
+      throw new Error('No se pudo preparar la página del PDF');
+    }
 
-    window.addEventListener('afterprint', restoreTitle);
-    window.print();
+    context.drawImage(
+      source,
+      0,
+      offsetYPx,
+      source.width,
+      sliceHeightPx,
+      0,
+      0,
+      source.width,
+      sliceHeightPx
+    );
+
+    return sliceCanvas.toDataURL('image/png');
   }
 
   private async captureElement(element: HTMLElement): Promise<HTMLCanvasElement> {
+    const captureWidthPx = PRINT_DOCUMENT_CAPTURE_WIDTH_PX;
+
+    await this.carnetExport.yieldToUi();
+
     return html2canvas(element, {
-      scale: 2,
+      scale: PRINT_CAPTURE_SCALE,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: 800,
+      width: captureWidthPx,
+      windowWidth: captureWidthPx,
+      onclone: (_document, clonedElement) => {
+        clonedElement.style.boxSizing = 'border-box';
+        clonedElement.style.width = `${captureWidthPx}px`;
+        clonedElement.style.minWidth = `${captureWidthPx}px`;
+        clonedElement.style.maxWidth = `${captureWidthPx}px`;
+        clonedElement.classList.add('print-document--export');
+      },
     });
   }
 }

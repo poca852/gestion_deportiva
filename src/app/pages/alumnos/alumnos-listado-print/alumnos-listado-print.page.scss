@@ -274,7 +274,7 @@
   border-top: 1px solid var(--ion-color-light-shade);
 }
 
-@media (max-width: 576px) {
+@container print-document (max-width: 576px) {
   .doc-players {
     overflow-x: auto;
 

@@ -7,6 +7,47 @@
   background: #fff;
   color: #000;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  container-type: inline-size;
+  container-name: print-document;
+
+  @container print-document (max-width: 576px) {
+    padding: 20px 16px;
+
+    .doc-footer {
+      flex-direction: column;
+      gap: 32px;
+      align-items: stretch;
+    }
+  }
+}
+
+// Layout de escritorio forzado al exportar (html2canvas clona con ancho A4 fijo).
+.print-document.print-document--export {
+  width: 800px !important;
+  max-width: 800px !important;
+  min-width: 800px !important;
+  padding: 32px 24px !important;
+
+  .doc-footer {
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    gap: 0 !important;
+  }
+
+  .signature-block,
+  .footer-signature,
+  .footer-sello {
+    width: 40% !important;
+  }
+
+  .doc-players {
+    overflow-x: visible !important;
+
+    table {
+      min-width: 0 !important;
+      width: 100% !important;
+    }
+  }
 }
 
 .export-actions {
@@ -16,6 +57,35 @@
   padding: 16px 16px 24px;
   max-width: 600px;
   margin: 0 auto;
+}
+
+.export-feedback {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: all;
+}
+
+.export-feedback-spinner {
+  width: 52px;
+  height: 52px;
+  --color: #ffffff;
+}
+
+.export-feedback-text {
+  margin: 0;
+  padding: 0 32px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .export-secondary {
@@ -99,18 +169,6 @@
     margin: 0;
     font-size: 0.8rem;
     color: #666;
-  }
-}
-
-@media (max-width: 576px) {
-  .print-document {
-    padding: 20px 16px;
-  }
-
-  .doc-footer {
-    flex-direction: column;
-    gap: 32px;
-    align-items: stretch;
   }
 }
 
