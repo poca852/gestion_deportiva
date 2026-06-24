@@ -1,23 +1,26 @@
 import { Injectable, inject } from '@angular/core';
 import { toDataURL } from 'qrcode';
 import { environment } from '../../environments/environment';
-import { CARNET_DATA_BATCH_SIZE } from '../constants/carnet.constants';
+import { CARNET_DATA_BATCH_SIZE, CARNET_HEIGHT, CARNET_WIDTH } from '../constants/carnet.constants';
 import { Alumno } from '../interfaces/alumno.interface';
+import { formatCategoriaCarnet } from '../utils/carnet-format.util';
+import { getStandardCarnetLayout } from '../utils/carnet-layout.util';
+import { themeFromAcademia } from '../utils/carnet-theme.util';
 import { AcademiaContextService } from './academia-context.service';
+import {
+  CarnetCompositorService,
+  CarnetRenderAssets,
+} from './carnet-compositor.service';
 import { SupabaseService } from './supabase.service';
 
 export interface CarnetData {
   alumno: Alumno;
   nombreCompleto: string;
+  nombresDisplay: string;
+  apellidosDisplay: string;
+  categoriaDisplay: string;
   fotoDataUrl: string | null;
-  logoDataUrl: string | null;
   qrDataUrl: string;
-  nombreAcademia: string;
-  fechaNacimientoFormateada: string;
-}
-
-export interface CarnetSharedAssets {
-  logoDataUrl: string | null;
   nombreAcademia: string;
 }
 
@@ -27,6 +30,7 @@ export interface CarnetSharedAssets {
 export class CarnetService {
   private readonly supabaseService = inject(SupabaseService);
   private readonly academiaContext = inject(AcademiaContextService);
+  private readonly compositor = inject(CarnetCompositorService);
 
   async generateQrDataUrl(alumno: Alumno): Promise<string> {
     const base = environment.siteUrl.replace(/\/$/, '');
@@ -56,47 +60,54 @@ export class CarnetService {
     }
   }
 
-  async getSharedAssets(): Promise<CarnetSharedAssets> {
+  async getRenderAssets(): Promise<CarnetRenderAssets> {
     const academia = this.academiaContext.academiaActual();
+    const nombreAcademia = academia?.nombre ?? '';
+    const theme = themeFromAcademia(academia);
+
     const logoDataUrl = academia?.logo_url
       ? await this.loadImageAsDataUrl(academia.logo_url)
       : null;
 
     return {
+      nombreAcademia,
       logoDataUrl,
-      nombreAcademia: academia?.nombre ?? '',
+      theme,
+      layout: getStandardCarnetLayout(),
+      canvasWidth: CARNET_WIDTH,
+      canvasHeight: CARNET_HEIGHT,
     };
   }
 
   async getCarnetDataForAlumno(
     alumno: Alumno,
-    shared?: CarnetSharedAssets
+    nombreAcademia = ''
   ): Promise<CarnetData> {
-    const assets = shared ?? (await this.getSharedAssets());
+    const academia = this.academiaContext.academiaActual();
+    const academyName = nombreAcademia || academia?.nombre || '';
 
     const [qrDataUrl, fotoDataUrl] = await Promise.all([
       this.generateQrDataUrl(alumno),
       this.loadImageAsDataUrl(alumno.foto_estudiante_url),
     ]);
 
-    return this.buildCarnetData(alumno, assets, qrDataUrl, fotoDataUrl);
-  }
-
-  async getCarnetData(alumno: Alumno): Promise<CarnetData> {
-    return this.getCarnetDataForAlumno(alumno);
+    return this.buildCarnetData(alumno, academyName, qrDataUrl, fotoDataUrl);
   }
 
   async prepareBatchData(
     alumnos: Alumno[],
     onProgress?: (current: number, total: number) => void
   ): Promise<CarnetData[]> {
-    const shared = await this.getSharedAssets();
+    const academia = this.academiaContext.academiaActual();
+    const nombreAcademia = academia?.nombre ?? '';
     const results: CarnetData[] = [];
 
     for (let i = 0; i < alumnos.length; i += CARNET_DATA_BATCH_SIZE) {
       const chunk = alumnos.slice(i, i + CARNET_DATA_BATCH_SIZE);
       const chunkData = await Promise.all(
-        chunk.map((alumno) => this.getCarnetDataForAlumno(alumno, shared))
+        chunk.map((alumno) =>
+          this.getCarnetDataForAlumno(alumno, nombreAcademia)
+        )
       );
       results.push(...chunkData);
       onProgress?.(Math.min(i + chunk.length, alumnos.length), alumnos.length);
@@ -106,28 +117,62 @@ export class CarnetService {
     return results;
   }
 
-  private buildCarnetData(
-    alumno: Alumno,
-    shared: CarnetSharedAssets,
-    qrDataUrl: string,
-    fotoDataUrl: string | null
-  ): CarnetData {
-    const fechaNacimientoFormateada = new Date(
-      alumno.fecha_nacimiento + 'T00:00:00'
-    ).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
+  async renderCarnetCanvas(
+    data: CarnetData,
+    assets?: CarnetRenderAssets
+  ): Promise<HTMLCanvasElement> {
+    const renderAssets = assets ?? (await this.getRenderAssets());
+    return this.compositor.compose(data, renderAssets);
+  }
+
+  buildPreviewSampleData(nombreAcademia: string): CarnetData {
+    const alumno: Alumno = {
+      id: 'preview',
+      nombres: 'Mateo Sebastian',
+      apellidos: 'Alvarez Soto',
+      fecha_nacimiento: '2017-02-28',
+      genero: 'masculino',
+      nombre_tutor: 'María García',
+      telefono_tutor: '5555-1234',
+      foto_estudiante_url: null,
+      foto_documento_url: null,
+      foto_documento_padre_url: null,
+      talla_camiseta: 'M',
+      categoria: 'U12',
+      nivel: null,
+      fecha_ingreso: null,
+      public_token: 'preview-token',
+      created_at: '',
+      updated_at: '',
+    };
 
     return {
       alumno,
       nombreCompleto: `${alumno.nombres} ${alumno.apellidos}`,
+      nombresDisplay: alumno.nombres,
+      apellidosDisplay: alumno.apellidos,
+      categoriaDisplay: formatCategoriaCarnet(alumno.categoria),
+      fotoDataUrl: null,
+      qrDataUrl: '',
+      nombreAcademia,
+    };
+  }
+
+  private buildCarnetData(
+    alumno: Alumno,
+    nombreAcademia: string,
+    qrDataUrl: string,
+    fotoDataUrl: string | null
+  ): CarnetData {
+    return {
+      alumno,
+      nombreCompleto: `${alumno.nombres} ${alumno.apellidos}`,
+      nombresDisplay: alumno.nombres,
+      apellidosDisplay: alumno.apellidos,
+      categoriaDisplay: formatCategoriaCarnet(alumno.categoria),
       fotoDataUrl,
-      logoDataUrl: shared.logoDataUrl,
       qrDataUrl,
-      nombreAcademia: shared.nombreAcademia,
-      fechaNacimientoFormateada,
+      nombreAcademia,
     };
   }
 }
