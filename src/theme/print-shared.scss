@@ -21,17 +21,55 @@
   }
 }
 
-// Layout de escritorio forzado al exportar (html2canvas clona con ancho A4 fijo).
+// Layout de escritorio forzado al exportar (clon fuera del viewport móvil).
 .print-document.print-document--export {
   width: 800px !important;
   max-width: 800px !important;
   min-width: 800px !important;
   padding: 32px 24px !important;
+  container-type: normal !important;
+
+  .doc-header {
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+  }
+
+  .doc-header .doc-title {
+    text-align: right !important;
+    flex: 1 1 180px !important;
+    width: auto !important;
+  }
+
+  .doc-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 24px !important;
+    margin-bottom: 32px !important;
+
+    .meta-item {
+      flex: 0 1 auto !important;
+    }
+  }
+
+  .doc-players {
+    overflow-x: visible !important;
+    clear: both !important;
+
+    h3 {
+      margin: 0 0 12px !important;
+    }
+
+    table {
+      min-width: 0 !important;
+      width: 100% !important;
+    }
+  }
 
   .doc-footer {
     flex-direction: row !important;
     align-items: flex-end !important;
     gap: 0 !important;
+    margin-top: 48px !important;
   }
 
   .signature-block,
@@ -40,13 +78,10 @@
     width: 40% !important;
   }
 
-  .doc-players {
-    overflow-x: visible !important;
-
-    table {
-      min-width: 0 !important;
-      width: 100% !important;
-    }
+  .club-logo {
+    width: 80px !important;
+    height: 80px !important;
+    flex-shrink: 0 !important;
   }
 }
 

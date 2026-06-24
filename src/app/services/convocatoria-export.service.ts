@@ -1,14 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import {
-  PRINT_CAPTURE_SCALE,
-  PRINT_DOCUMENT_CAPTURE_WIDTH_PX,
   PRINT_PDF_CONTENT_HEIGHT_MM,
   PRINT_PDF_CONTENT_WIDTH_MM,
   PRINT_PDF_MARGIN_MM,
 } from '../constants/print.constants';
 import { Convocatoria } from '../interfaces/convocatoria.interface';
+import { capturePrintDocument } from '../utils/print-capture.util';
 import { CarnetExportService } from './carnet-export.service';
 
 export type ConvocatoriaExportResult = 'native' | 'browser' | 'shared';
@@ -128,25 +126,7 @@ export class ConvocatoriaExportService {
     return sliceCanvas.toDataURL('image/png');
   }
 
-  private async captureElement(element: HTMLElement): Promise<HTMLCanvasElement> {
-    const captureWidthPx = PRINT_DOCUMENT_CAPTURE_WIDTH_PX;
-
-    await this.carnetExport.yieldToUi();
-
-    return html2canvas(element, {
-      scale: PRINT_CAPTURE_SCALE,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      width: captureWidthPx,
-      windowWidth: captureWidthPx,
-      onclone: (_document, clonedElement) => {
-        clonedElement.style.boxSizing = 'border-box';
-        clonedElement.style.width = `${captureWidthPx}px`;
-        clonedElement.style.minWidth = `${captureWidthPx}px`;
-        clonedElement.style.maxWidth = `${captureWidthPx}px`;
-        clonedElement.classList.add('print-document--export');
-      },
-    });
+  private captureElement(element: HTMLElement): Promise<HTMLCanvasElement> {
+    return capturePrintDocument(element, () => this.carnetExport.yieldToUi());
   }
 }

@@ -168,25 +168,6 @@
   }
 }
 
-.print-document.print-document--export {
-  .doc-header .doc-title {
-    text-align: right !important;
-    width: auto !important;
-  }
-
-  .doc-meta {
-    gap: 24px !important;
-
-    .meta-item {
-      flex: 0 1 auto !important;
-    }
-  }
-
-  .signature-block {
-    width: 40% !important;
-  }
-}
-
 @media print {
   .no-print,
   ion-menu,
