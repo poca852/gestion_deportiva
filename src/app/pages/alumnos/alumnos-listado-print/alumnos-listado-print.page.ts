@@ -281,7 +281,9 @@ export class AlumnosListadoPrintPage implements OnInit {
       const message =
         result === 'native'
           ? `Archivo guardado en Documentos: ${this.filename}.pdf`
-          : 'PDF descargado correctamente';
+          : result === 'shared'
+            ? `Selecciona dónde guardar: ${this.filename}.pdf`
+            : 'PDF descargado correctamente';
       const toast = await this.toastCtrl.create({
         message,
         duration: 2000,
@@ -323,7 +325,9 @@ export class AlumnosListadoPrintPage implements OnInit {
       const message =
         result === 'native'
           ? `Archivo guardado en Documentos: ${this.filename}.png`
-          : 'Imagen descargada correctamente';
+          : result === 'shared'
+            ? `Selecciona dónde guardar: ${this.filename}.png`
+            : 'Imagen descargada correctamente';
       const toast = await this.toastCtrl.create({
         message,
         duration: 2000,

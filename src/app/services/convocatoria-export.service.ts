@@ -11,7 +11,7 @@ import {
 import { Convocatoria } from '../interfaces/convocatoria.interface';
 import { CarnetExportService } from './carnet-export.service';
 
-export type ConvocatoriaExportResult = 'native' | 'browser';
+export type ConvocatoriaExportResult = 'native' | 'browser' | 'shared';
 
 @Injectable({
   providedIn: 'root',
@@ -37,7 +37,11 @@ export class ConvocatoriaExportService {
   ): Promise<ConvocatoriaExportResult> {
     const canvas = await this.captureElement(element);
     const pdfBlob = this.buildPdfBlob(canvas);
-    return this.carnetExport.downloadBlobFile(pdfBlob, `${filename}.pdf`);
+    const result = await this.carnetExport.downloadBlobFile(
+      pdfBlob,
+      `${filename}.pdf`
+    );
+    return result.method;
   }
 
   async downloadImage(
@@ -46,7 +50,11 @@ export class ConvocatoriaExportService {
   ): Promise<ConvocatoriaExportResult> {
     const canvas = await this.captureElement(element);
     const blob = await this.carnetExport.canvasToBlob(canvas);
-    return this.carnetExport.downloadBlobFile(blob, `${filename}.png`);
+    const result = await this.carnetExport.downloadBlobFile(
+      blob,
+      `${filename}.png`
+    );
+    return result.method;
   }
 
   private buildPdfBlob(canvas: HTMLCanvasElement): Blob {

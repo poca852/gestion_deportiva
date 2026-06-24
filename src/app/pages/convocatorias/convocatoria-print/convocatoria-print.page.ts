@@ -302,14 +302,16 @@ export class ConvocatoriaPrintPage implements OnInit {
   }
 
   private async showExportSuccessToast(
-    result: 'native' | 'browser',
+    result: 'native' | 'browser' | 'shared',
     filename: string,
     browserMessage: string
   ): Promise<void> {
     const message =
       result === 'native'
         ? `Archivo guardado en Documentos: ${filename}`
-        : browserMessage;
+        : result === 'shared'
+          ? `Selecciona dónde guardar: ${filename}`
+          : browserMessage;
     await this.showToast(message, 'success');
   }
 
