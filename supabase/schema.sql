@@ -25,6 +25,9 @@ CREATE TABLE public.academias (
   direccion TEXT NOT NULL DEFAULT '',
   logo_url TEXT,
   sello_url TEXT,
+  carnet_color_franja_inicio TEXT NOT NULL DEFAULT '#9d0208',
+  carnet_color_franja_fin TEXT NOT NULL DEFAULT '#e85d04',
+  carnet_color_marco_foto TEXT NOT NULL DEFAULT '#e85d04',
   admin_id UUID REFERENCES public.entrenadores(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
