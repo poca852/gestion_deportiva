@@ -58,15 +58,20 @@
           <div
             class="carnet-scale-inner"
             [style.transform]="'scale(' + previewScale + ')'"
+            [style.width.px]="renderAssets?.canvasWidth ?? carnetWidth"
+            [style.height.px]="renderAssets?.canvasHeight ?? carnetHeight"
           >
-            <app-carnet-card #carnetCard [carnetData]="carnetData" />
+            <app-carnet-card
+              [carnetData]="carnetData"
+              [renderAssets]="renderAssets"
+            />
           </div>
         </div>
       </div>
 
       <p class="carnet-info-text">
-        Vista previa adaptada a tu pantalla. El archivo descargado mantiene
-        tamaño ID-1 (53.98mm × 85.60mm) a 300 DPI (638 × 1011 px).
+        Vista previa adaptada a tu pantalla. El archivo descargado conserva el
+        tamaño estándar del carnet (horizontal).
       </p>
     </div>
   } @else if (error) {

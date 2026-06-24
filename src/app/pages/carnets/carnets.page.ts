@@ -3,7 +3,6 @@ import {
   Component,
   inject,
   OnInit,
-  ViewChild,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -30,7 +29,6 @@ import {
   shareOutline,
 } from 'ionicons/icons';
 import { firstValueFrom } from 'rxjs';
-import { CarnetCardComponent } from '../../components/carnet-card/carnet-card.component';
 import { Alumno } from '../../interfaces/alumno.interface';
 import { AlumnosService } from '../../services/alumnos.service';
 import { AuthService } from '../../services/auth.service';
@@ -39,7 +37,7 @@ import {
   CarnetBatchProgress,
   CarnetExportService,
 } from '../../services/carnet-export.service';
-import { CarnetData, CarnetService } from '../../services/carnet.service';
+import { CarnetService } from '../../services/carnet.service';
 import { CategoriaFilter } from '../../utils/categoria-filter.util';
 
 @Component({
@@ -49,7 +47,6 @@ import { CategoriaFilter } from '../../utils/categoria-filter.util';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    CarnetCardComponent,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -65,8 +62,6 @@ import { CategoriaFilter } from '../../utils/categoria-filter.util';
   ],
 })
 export class CarnetsPage implements OnInit {
-  @ViewChild('renderCard') renderCard?: CarnetCardComponent;
-
   private readonly fb = inject(FormBuilder);
   private readonly alumnosService = inject(AlumnosService);
   private readonly carnetService = inject(CarnetService);
@@ -78,7 +73,6 @@ export class CarnetsPage implements OnInit {
 
   categoriasOptions: string[] = [];
   alumnos: Alumno[] = [];
-  renderData: CarnetData | null = null;
 
   loadingAlumnos = false;
   generando = false;
@@ -144,11 +138,12 @@ export class CarnetsPage implements OnInit {
     if (!zipBlob) return;
 
     const filename = this.exportService.buildZipFilename(this.categoriasSeleccionadas);
-    await this.exportService.downloadBlobFile(zipBlob, filename);
+    const result = await this.exportService.downloadBlobFile(zipBlob, filename);
 
     await this.mostrarToast(
-      `${this.alumnos.length} carnets descargados en ZIP`,
-      'success'
+      this.exportService.downloadResultMessage(result),
+      'success',
+      result.method === 'native' ? 4000 : 2500
     );
   }
 
@@ -201,6 +196,8 @@ export class CarnetsPage implements OnInit {
     await this.exportService.yieldToUi();
 
     try {
+      const renderAssets = await this.carnetService.getRenderAssets();
+
       const carnetDataList = await this.carnetService.prepareBatchData(
         this.alumnos,
         (current, total) => {
@@ -218,7 +215,6 @@ export class CarnetsPage implements OnInit {
 
       for (let i = 0; i < carnetDataList.length; i++) {
         const data = carnetDataList[i];
-        this.renderData = data;
         this.actualizarProgreso({
           phase: 'generating',
           current: i + 1,
@@ -227,14 +223,11 @@ export class CarnetsPage implements OnInit {
         });
         this.cdr.detectChanges();
         await this.exportService.yieldToUi();
-        await this.exportService.yieldToUi();
 
-        const element = this.renderCard?.getCaptureElement();
-        if (!element) {
-          throw new Error('No se pudo renderizar el carnet');
-        }
-
-        const canvas = await this.exportService.captureElement(element);
+        const canvas = await this.carnetService.renderCarnetCanvas(
+          data,
+          renderAssets
+        );
         const blob = await this.exportService.canvasToBlob(canvas);
         archivos.push({
           path: this.exportService.buildCarnetFilename(data),
@@ -262,7 +255,6 @@ export class CarnetsPage implements OnInit {
       await this.mostrarToast('No se pudieron generar los carnets', 'danger');
       return null;
     } finally {
-      this.renderData = null;
       this.generando = false;
       this.progresoActual = 0;
       this.progresoTotal = 0;
@@ -298,11 +290,12 @@ export class CarnetsPage implements OnInit {
 
   private async mostrarToast(
     message: string,
-    color: 'success' | 'danger' | 'warning'
+    color: 'success' | 'danger' | 'warning',
+    duration = color === 'success' ? 2500 : 3500
   ): Promise<void> {
     const toast = await this.toastCtrl.create({
       message,
-      duration: color === 'success' ? 2500 : 3500,
+      duration,
       color,
     });
     await toast.present();

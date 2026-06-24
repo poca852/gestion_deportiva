@@ -1,11 +1,5 @@
 import { Injectable } from '@angular/core';
-import html2canvas from 'html2canvas';
 import JSZip from 'jszip';
-import {
-  CARNET_CAPTURE_SCALE,
-  CARNET_HEIGHT,
-  CARNET_WIDTH,
-} from '../constants/carnet.constants';
 import { slugifyCarnetText } from '../utils/carnet-format.util';
 import { CarnetData } from './carnet.service';
 
@@ -17,6 +11,11 @@ export interface CarnetBatchProgress {
   total: number;
   label?: string;
 }
+
+export type CarnetDownloadResult =
+  | { method: 'native'; filename: string }
+  | { method: 'browser'; filename: string }
+  | { method: 'shared'; filename: string };
 
 @Injectable({
   providedIn: 'root',
@@ -41,33 +40,14 @@ export class CarnetExportService {
     return `carnets_${label}_${fecha}.zip`;
   }
 
-  async captureElement(
-    element: HTMLElement,
-    options?: { scale?: number; resetParentScale?: HTMLElement | null }
-  ): Promise<HTMLCanvasElement> {
-    const scale = options?.scale ?? CARNET_CAPTURE_SCALE;
-    const wrapper = options?.resetParentScale ?? null;
-    const originalTransform = wrapper?.style.transform ?? '';
-
-    if (wrapper) {
-      wrapper.style.transform = 'none';
-    }
-
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-
-    try {
-      return await html2canvas(element, {
-        scale,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: CARNET_WIDTH,
-        height: CARNET_HEIGHT,
-      });
-    } finally {
-      if (wrapper) {
-        wrapper.style.transform = originalTransform;
-      }
+  downloadResultMessage(result: CarnetDownloadResult): string {
+    switch (result.method) {
+      case 'native':
+        return `Archivo guardado en el dispositivo: ${result.filename}`;
+      case 'shared':
+        return `Selecciona dónde guardar: ${result.filename}`;
+      case 'browser':
+        return `Descarga iniciada: ${result.filename}`;
     }
   }
 
@@ -103,28 +83,37 @@ export class CarnetExportService {
   }
 
   /**
-   * Descarga un blob. En nativo guarda en Documents; en web usa el diálogo
+   * Descarga un blob. En nativo guarda en Documents; si falla, abre el
+   * selector para compartir/guardar (Android/iOS). En web usa el diálogo
    * del navegador o un enlace de descarga.
    */
   async downloadBlobFile(
     blob: Blob,
     filename: string
-  ): Promise<'native' | 'browser'> {
+  ): Promise<CarnetDownloadResult> {
     const { Capacitor } = await import('@capacitor/core');
 
     if (Capacitor.isNativePlatform()) {
       const saved = await this.saveBlobToDocuments(blob, filename);
       if (saved) {
-        return 'native';
+        return { method: 'native', filename };
       }
+
+      const shared = await this.shareBlobNative(
+        blob,
+        filename,
+        'Guardar archivo',
+        filename
+      );
+      if (shared) {
+        return { method: 'shared', filename };
+      }
+
+      throw new Error('No se pudo guardar el archivo en el dispositivo');
     }
 
     await this.downloadBlobInBrowser(blob, filename);
-    return 'browser';
-  }
-
-  downloadBlob(blob: Blob, filename: string): void {
-    void this.downloadBlobInBrowser(blob, filename);
+    return { method: 'browser', filename };
   }
 
   private async downloadBlobInBrowser(
@@ -213,29 +202,8 @@ export class CarnetExportService {
       const { Capacitor } = await import('@capacitor/core');
 
       if (Capacitor.isNativePlatform()) {
-        const { Filesystem, Directory } = await import('@capacitor/filesystem');
-        const { Share } = await import('@capacitor/share');
-        const base64 = await this.blobToBase64(blob);
-
-        await Filesystem.writeFile({
-          path: filename,
-          data: base64,
-          directory: Directory.Cache,
-        });
-
-        const { uri } = await Filesystem.getUri({
-          path: filename,
-          directory: Directory.Cache,
-        });
-
-        await Share.share({
-          title,
-          text,
-          files: [uri],
-          dialogTitle: title,
-        });
-
-        return 'shared';
+        const shared = await this.shareBlobNative(blob, filename, title, text);
+        return shared ? 'shared' : false;
       }
 
       return await this.shareBlobOnWeb(blob, filename, title, text);
@@ -244,9 +212,12 @@ export class CarnetExportService {
     }
   }
 
-  async downloadCanvas(canvas: HTMLCanvasElement, filename: string): Promise<void> {
+  async downloadCanvas(
+    canvas: HTMLCanvasElement,
+    filename: string
+  ): Promise<CarnetDownloadResult> {
     const blob = await this.canvasToBlob(canvas);
-    await this.downloadBlobFile(blob, filename);
+    return this.downloadBlobFile(blob, filename);
   }
 
   async shareCanvas(
@@ -258,13 +229,49 @@ export class CarnetExportService {
     return this.shareBlob(blob, filename, 'Carnet', text);
   }
 
+  private async shareBlobNative(
+    blob: Blob,
+    filename: string,
+    title: string,
+    text: string
+  ): Promise<boolean> {
+    try {
+      const { Filesystem, Directory } = await import('@capacitor/filesystem');
+      const { Share } = await import('@capacitor/share');
+      const base64 = await this.blobToBase64(blob);
+
+      await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+      });
+
+      const { uri } = await Filesystem.getUri({
+        path: filename,
+        directory: Directory.Cache,
+      });
+
+      await Share.share({
+        title,
+        text,
+        files: [uri],
+        dialogTitle: title,
+      });
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private async shareBlobOnWeb(
     blob: Blob,
     filename: string,
     title: string,
     text: string
   ): Promise<'shared' | 'downloaded' | false> {
-    const file = new File([blob], filename, { type: 'application/zip' });
+    const mime = filename.endsWith('.zip') ? 'application/zip' : 'image/png';
+    const file = new File([blob], filename, { type: mime });
 
     if (navigator.canShare?.({ files: [file] })) {
       try {
@@ -277,7 +284,6 @@ export class CarnetExportService {
       }
     }
 
-    // En web muchos navegadores no permiten compartir ZIP: descargar como alternativa
     await this.downloadBlobInBrowser(blob, filename);
     return 'downloaded';
   }
