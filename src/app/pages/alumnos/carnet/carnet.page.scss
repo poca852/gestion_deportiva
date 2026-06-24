@@ -72,8 +72,6 @@
 
 .carnet-scale-inner {
   transform-origin: top left;
-  width: 638px;
-  height: 1011px;
   will-change: transform;
 }
 
@@ -102,8 +100,8 @@
   }
 
   .carnet-visual-wrapper {
-    width: 638px !important;
-    height: 1011px !important;
+    width: auto !important;
+    height: auto !important;
   }
 
   ion-header {

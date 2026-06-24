@@ -27,16 +27,27 @@ import {
   businessOutline,
   checkmarkOutline,
   cloudUploadOutline,
+  colorPaletteOutline,
   imageOutline,
   ribbonOutline,
 } from 'ionicons/icons';
-import { switchMap } from 'rxjs';
+import { Subscription, switchMap } from 'rxjs';
+import { CarnetCardComponent } from '../../components/carnet-card/carnet-card.component';
+import { LazyImageComponent } from '../../components/lazy-image/lazy-image.component';
+import { DEFAULT_CARNET_THEME } from '../../interfaces/carnet-theme.interface';
 import { AuthService } from '../../services/auth.service';
 import { AcademiaService } from '../../services/academia.service';
 import { AcademiaContextService } from '../../services/academia-context.service';
-import { AcademiaBrandingService } from '../../services/academia-branding.service';
+import { CarnetRenderAssets } from '../../services/carnet-compositor.service';
+import { CarnetData, CarnetService } from '../../services/carnet.service';
 import { SupabaseService } from '../../services/supabase.service';
-import { LazyImageComponent } from '../../components/lazy-image/lazy-image.component';
+import { getStandardCarnetLayout } from '../../utils/carnet-layout.util';
+import {
+  isValidHexColor,
+  normalizeHexColor,
+  themeFromAcademia,
+} from '../../utils/carnet-theme.util';
+import { CARNET_HEIGHT, CARNET_WIDTH } from '../../constants/carnet.constants';
 
 @Component({
   selector: 'app-academia',
@@ -58,6 +69,7 @@ import { LazyImageComponent } from '../../components/lazy-image/lazy-image.compo
     IonSpinner,
     IonIcon,
     LazyImageComponent,
+    CarnetCardComponent,
   ],
 })
 export class AcademiaPage implements OnInit, OnDestroy {
@@ -66,10 +78,12 @@ export class AcademiaPage implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly academiaService = inject(AcademiaService);
   private readonly academiaContext = inject(AcademiaContextService);
-  private readonly branding = inject(AcademiaBrandingService);
   private readonly supabaseService = inject(SupabaseService);
+  private readonly carnetService = inject(CarnetService);
   private readonly toastCtrl = inject(ToastController);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  private formSub?: Subscription;
 
   loading = true;
   loadingLogo = false;
@@ -79,6 +93,12 @@ export class AcademiaPage implements OnInit, OnDestroy {
   uploadingSello = false;
   logoPreview: string | null = null;
   selloPreview: string | null = null;
+  carnetPreviewSample: CarnetData | null = null;
+  carnetPreviewAssets: CarnetRenderAssets | null = null;
+  carnetPreviewScale = 0.42;
+  readonly carnetWidth = CARNET_WIDTH;
+  readonly carnetHeight = CARNET_HEIGHT;
+
   private localObjectUrl: string | null = null;
   private localSelloObjectUrl: string | null = null;
 
@@ -87,6 +107,12 @@ export class AcademiaPage implements OnInit, OnDestroy {
     direccion: ['', Validators.required],
     logo_url: [''],
     sello_url: [''],
+    carnet_color_franja_inicio: [
+      DEFAULT_CARNET_THEME.franjaInicio,
+      Validators.required,
+    ],
+    carnet_color_franja_fin: [DEFAULT_CARNET_THEME.franjaFin, Validators.required],
+    carnet_color_marco_foto: [DEFAULT_CARNET_THEME.marcoFoto, Validators.required],
   });
 
   constructor() {
@@ -96,10 +122,14 @@ export class AcademiaPage implements OnInit, OnDestroy {
       cloudUploadOutline,
       imageOutline,
       ribbonOutline,
+      colorPaletteOutline,
     });
   }
 
   ngOnInit(): void {
+    this.formSub = this.form.valueChanges.subscribe(() => {
+      void this.refreshCarnetPreviewAssets();
+    });
     this.enforceAdminAccess();
   }
 
@@ -108,6 +138,7 @@ export class AcademiaPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.formSub?.unsubscribe();
     this.revokeLocalPreview();
     this.revokeLocalSelloPreview();
   }
@@ -118,10 +149,10 @@ export class AcademiaPage implements OnInit, OnDestroy {
       this.showToast('Solo un administrador puede acceder a Academia.', 'danger');
       return;
     }
-    this.loadConfig();
+    void this.loadConfig();
   }
 
-  loadConfig(): void {
+  private async loadConfig(): Promise<void> {
     const academia = this.academiaContext.academiaActual();
 
     if (!academia) {
@@ -135,12 +166,72 @@ export class AcademiaPage implements OnInit, OnDestroy {
       direccion: academia.direccion,
       logo_url: academia.logo_url ?? '',
       sello_url: academia.sello_url ?? '',
+      carnet_color_franja_inicio: normalizeHexColor(
+        academia.carnet_color_franja_inicio,
+        DEFAULT_CARNET_THEME.franjaInicio
+      ),
+      carnet_color_franja_fin: normalizeHexColor(
+        academia.carnet_color_franja_fin,
+        DEFAULT_CARNET_THEME.franjaFin
+      ),
+      carnet_color_marco_foto: normalizeHexColor(
+        academia.carnet_color_marco_foto,
+        DEFAULT_CARNET_THEME.marcoFoto
+      ),
     });
     this.loading = false;
     this.cdr.markForCheck();
 
-    void this.refreshLogoPreview(academia.logo_url);
-    void this.refreshSelloPreview(academia.sello_url);
+    await this.refreshLogoPreview(academia.logo_url);
+    await this.refreshSelloPreview(academia.sello_url);
+    await this.initCarnetPreview();
+  }
+
+  private async initCarnetPreview(): Promise<void> {
+    const sample = this.carnetService.buildPreviewSampleData(
+      this.form.controls.nombre.value
+    );
+    try {
+      sample.qrDataUrl = await this.carnetService.generateQrDataUrl(sample.alumno);
+    } catch {
+      sample.qrDataUrl = '';
+    }
+    this.carnetPreviewSample = sample;
+    await this.refreshCarnetPreviewAssets();
+    this.cdr.markForCheck();
+  }
+
+  private async refreshCarnetPreviewAssets(): Promise<void> {
+    const raw = this.form.getRawValue();
+    const theme = themeFromAcademia({
+      carnet_color_franja_inicio: raw.carnet_color_franja_inicio,
+      carnet_color_franja_fin: raw.carnet_color_franja_fin,
+      carnet_color_marco_foto: raw.carnet_color_marco_foto,
+    });
+
+    let logoDataUrl: string | null = this.logoPreview;
+    if (raw.logo_url) {
+      const storedLogo = await this.carnetService.loadImageAsDataUrl(raw.logo_url);
+      if (storedLogo) {
+        logoDataUrl = storedLogo;
+      }
+    }
+
+    this.carnetPreviewAssets = {
+      nombreAcademia: raw.nombre,
+      logoDataUrl,
+      theme,
+      layout: getStandardCarnetLayout(),
+      canvasWidth: CARNET_WIDTH,
+      canvasHeight: CARNET_HEIGHT,
+    };
+
+    if (this.carnetPreviewSample) {
+      this.carnetPreviewSample = {
+        ...this.carnetPreviewSample,
+        nombreAcademia: raw.nombre,
+      };
+    }
   }
 
   onLogoSelected(event: Event): void {
@@ -157,6 +248,7 @@ export class AcademiaPage implements OnInit, OnDestroy {
     this.revokeLocalPreview();
     this.localObjectUrl = URL.createObjectURL(file);
     this.logoPreview = this.localObjectUrl;
+    void this.refreshCarnetPreviewAssets();
     this.uploadingLogo = true;
     this.cdr.markForCheck();
 
@@ -174,12 +266,7 @@ export class AcademiaPage implements OnInit, OnDestroy {
       .uploadLogo(file, previousPath)
       .pipe(
         switchMap((path) =>
-          this.academiaService.update(academiaId, {
-            nombre: this.form.controls.nombre.value,
-            direccion: this.form.controls.direccion.value,
-            logo_url: path,
-            sello_url: this.form.controls.sello_url.value || null,
-          })
+          this.academiaService.update(academiaId, this.buildAcademiaPayload(path))
         )
       )
       .subscribe({
@@ -187,8 +274,8 @@ export class AcademiaPage implements OnInit, OnDestroy {
           this.form.patchValue({ logo_url: config.logo_url ?? '' });
           this.revokeLocalPreview();
           await this.refreshLogoPreview(config.logo_url);
-          // Actualizar el contexto con los nuevos datos
           this.academiaContext.academiaActual.set(config);
+          void this.refreshCarnetPreviewAssets();
           this.uploadingLogo = false;
           input.value = '';
           this.cdr.markForCheck();
@@ -235,9 +322,7 @@ export class AcademiaPage implements OnInit, OnDestroy {
       .pipe(
         switchMap((path) =>
           this.academiaService.update(academiaId, {
-            nombre: this.form.controls.nombre.value,
-            direccion: this.form.controls.direccion.value,
-            logo_url: this.form.controls.logo_url.value || null,
+            ...this.buildAcademiaPayload(),
             sello_url: path,
           })
         )
@@ -268,9 +353,12 @@ export class AcademiaPage implements OnInit, OnDestroy {
       return;
     }
 
-    const { nombre, direccion, logo_url, sello_url } = this.form.getRawValue();
-    const academiaId = this.academiaContext.academiaId();
+    if (!this.areCarnetColorsValid()) {
+      void this.showToast('Revisa los colores del carnet (formato #RRGGBB).', 'danger');
+      return;
+    }
 
+    const academiaId = this.academiaContext.academiaId();
     if (!academiaId) {
       void this.showToast('No hay academia activa.', 'danger');
       return;
@@ -279,27 +367,65 @@ export class AcademiaPage implements OnInit, OnDestroy {
     this.saving = true;
     this.cdr.markForCheck();
 
-    this.academiaService
-      .update(academiaId, {
-        nombre,
-        direccion,
-        logo_url: logo_url || null,
-        sello_url: sello_url || null,
-      })
-      .subscribe({
-        next: async (config) => {
-          await this.refreshLogoPreview(config.logo_url);
-          this.academiaContext.academiaActual.set(config);
-          this.saving = false;
-          this.cdr.markForCheck();
-          await this.showToast('Información de la academia guardada', 'success');
-        },
-        error: async (err: Error) => {
-          this.saving = false;
-          this.cdr.markForCheck();
-          await this.showToast(err.message, 'danger');
-        },
-      });
+    this.academiaService.update(academiaId, this.buildAcademiaPayload()).subscribe({
+      next: async (config) => {
+        await this.refreshLogoPreview(config.logo_url);
+        this.academiaContext.academiaActual.set(config);
+        this.saving = false;
+        this.cdr.markForCheck();
+        await this.showToast('Información de la academia guardada', 'success');
+      },
+      error: async (err: Error) => {
+        this.saving = false;
+        this.cdr.markForCheck();
+        await this.showToast(err.message, 'danger');
+      },
+    });
+  }
+
+  private buildAcademiaPayload(logoUrl?: string | null) {
+    const {
+      nombre,
+      direccion,
+      logo_url,
+      sello_url,
+      carnet_color_franja_inicio,
+      carnet_color_franja_fin,
+      carnet_color_marco_foto,
+    } = this.form.getRawValue();
+
+    return {
+      nombre,
+      direccion,
+      logo_url: (logoUrl ?? logo_url) || null,
+      sello_url: sello_url || null,
+      carnet_color_franja_inicio: normalizeHexColor(
+        carnet_color_franja_inicio,
+        DEFAULT_CARNET_THEME.franjaInicio
+      ),
+      carnet_color_franja_fin: normalizeHexColor(
+        carnet_color_franja_fin,
+        DEFAULT_CARNET_THEME.franjaFin
+      ),
+      carnet_color_marco_foto: normalizeHexColor(
+        carnet_color_marco_foto,
+        DEFAULT_CARNET_THEME.marcoFoto
+      ),
+    };
+  }
+
+  private areCarnetColorsValid(): boolean {
+    const {
+      carnet_color_franja_inicio,
+      carnet_color_franja_fin,
+      carnet_color_marco_foto,
+    } = this.form.getRawValue();
+
+    return (
+      isValidHexColor(carnet_color_franja_inicio) &&
+      isValidHexColor(carnet_color_franja_fin) &&
+      isValidHexColor(carnet_color_marco_foto)
+    );
   }
 
   private async refreshLogoPreview(
@@ -308,6 +434,7 @@ export class AcademiaPage implements OnInit, OnDestroy {
     if (!stored) {
       this.logoPreview = null;
       this.loadingLogo = false;
+      void this.refreshCarnetPreviewAssets();
       return;
     }
 
@@ -315,14 +442,12 @@ export class AcademiaPage implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     try {
-      this.logoPreview = await this.supabaseService.resolveFileUrl(
-        stored,
-        true
-      );
+      this.logoPreview = await this.supabaseService.resolveFileUrl(stored, true);
     } catch {
       this.logoPreview = null;
     } finally {
       this.loadingLogo = false;
+      void this.refreshCarnetPreviewAssets();
       this.cdr.markForCheck();
     }
   }
@@ -340,10 +465,7 @@ export class AcademiaPage implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     try {
-      this.selloPreview = await this.supabaseService.resolveFileUrl(
-        stored,
-        true
-      );
+      this.selloPreview = await this.supabaseService.resolveFileUrl(stored, true);
     } catch {
       this.selloPreview = null;
     } finally {

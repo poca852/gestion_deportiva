@@ -127,15 +127,3 @@ ion-progress-bar {
   flex-direction: column;
   gap: 10px;
 }
-
-.carnet-render-host {
-  position: fixed;
-  left: -10000px;
-  top: 0;
-  width: 638px;
-  height: 1011px;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-  z-index: -1;
-}

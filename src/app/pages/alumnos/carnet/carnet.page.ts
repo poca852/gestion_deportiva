@@ -30,6 +30,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { CarnetCardComponent } from '../../../components/carnet-card/carnet-card.component';
 import { CARNET_HEIGHT, CARNET_WIDTH } from '../../../constants/carnet.constants';
+import { CarnetRenderAssets } from '../../../services/carnet-compositor.service';
 import { AlumnosService } from '../../../services/alumnos.service';
 import { CarnetExportService } from '../../../services/carnet-export.service';
 import { CarnetData, CarnetService } from '../../../services/carnet.service';
@@ -54,7 +55,6 @@ import { CarnetData, CarnetService } from '../../../services/carnet.service';
   ],
 })
 export class CarnetPage implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('carnetCard') carnetCard?: CarnetCardComponent;
   @ViewChild('previewViewport') previewViewport?: ElementRef<HTMLElement>;
 
   private readonly route = inject(ActivatedRoute);
@@ -72,11 +72,14 @@ export class CarnetPage implements OnInit, AfterViewInit, OnDestroy {
   sharing = false;
   mensajeExportacion = '';
   carnetData: CarnetData | null = null;
+  renderAssets: CarnetRenderAssets | null = null;
   error = false;
 
   previewScale = 1;
   previewBoxWidth = CARNET_WIDTH;
   previewBoxHeight = CARNET_HEIGHT;
+  readonly carnetWidth = CARNET_WIDTH;
+  readonly carnetHeight = CARNET_HEIGHT;
 
   get exportando(): boolean {
     return this.downloading || this.sharing;
@@ -109,8 +112,15 @@ export class CarnetPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     try {
-      const alumno = await firstValueFrom(this.alumnosService.getById(id));
-      this.carnetData = await this.carnetService.getCarnetData(alumno);
+      const [alumno, assets] = await Promise.all([
+        firstValueFrom(this.alumnosService.getById(id)),
+        this.carnetService.getRenderAssets(),
+      ]);
+      this.renderAssets = assets;
+      this.carnetData = await this.carnetService.getCarnetDataForAlumno(
+        alumno,
+        assets.nombreAcademia
+      );
       requestAnimationFrame(() => this.actualizarEscalaVista());
     } catch {
       this.error = true;
@@ -142,17 +152,18 @@ export class CarnetPage implements OnInit, AfterViewInit, OnDestroy {
     const viewport = this.previewViewport?.nativeElement;
     if (!viewport) return;
 
+    const cardWidth = this.renderAssets?.canvasWidth ?? CARNET_WIDTH;
+    const cardHeight = this.renderAssets?.canvasHeight ?? CARNET_HEIGHT;
     const availableWidth = viewport.clientWidth;
     const isMobile = window.innerWidth < 768;
 
-    // Móvil: ancho completo + scroll vertical. Escritorio: caber en pantalla.
     const scale = isMobile
-      ? availableWidth / CARNET_WIDTH
-      : Math.min(availableWidth / CARNET_WIDTH, 1);
+      ? availableWidth / cardWidth
+      : Math.min(availableWidth / cardWidth, 1);
 
     this.previewScale = scale;
-    this.previewBoxWidth = Math.round(CARNET_WIDTH * scale);
-    this.previewBoxHeight = Math.round(CARNET_HEIGHT * scale);
+    this.previewBoxWidth = Math.round(cardWidth * scale);
+    this.previewBoxHeight = Math.round(cardHeight * scale);
     this.cdr.markForCheck();
   }
 
@@ -162,14 +173,21 @@ export class CarnetPage implements OnInit, AfterViewInit, OnDestroy {
     await this.iniciarExportacion('descargando', 'Generando carnet para descargar...');
 
     try {
-      const canvas = await this.capturarCarnet();
+      const canvas = await this.carnetService.renderCarnetCanvas(
+        this.carnetData,
+        this.renderAssets ?? undefined
+      );
       this.mensajeExportacion = 'Guardando imagen...';
       this.cdr.detectChanges();
       await this.exportService.yieldToUi();
 
       const filename = this.exportService.buildCarnetFilename(this.carnetData);
-      await this.exportService.downloadCanvas(canvas, filename);
-      await this.mostrarToast('Carnet descargado correctamente', 'success');
+      const result = await this.exportService.downloadCanvas(canvas, filename);
+      await this.mostrarToast(
+        this.exportService.downloadResultMessage(result),
+        'success',
+        result.method === 'native' ? 4000 : 2500
+      );
     } catch {
       await this.mostrarToast('No se pudo descargar el carnet', 'danger');
     } finally {
@@ -183,7 +201,10 @@ export class CarnetPage implements OnInit, AfterViewInit, OnDestroy {
     await this.iniciarExportacion('compartiendo', 'Preparando carnet para compartir...');
 
     try {
-      const canvas = await this.capturarCarnet();
+      const canvas = await this.carnetService.renderCarnetCanvas(
+        this.carnetData,
+        this.renderAssets ?? undefined
+      );
       this.mensajeExportacion = 'Abriendo opciones para compartir...';
       this.cdr.detectChanges();
       await this.exportService.yieldToUi();
@@ -240,37 +261,14 @@ export class CarnetPage implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  private async capturarCarnet(): Promise<HTMLCanvasElement> {
-    const element = this.carnetCard?.getCaptureElement();
-    if (!element) {
-      throw new Error('Elemento del carnet no encontrado');
-    }
-
-    const scaleInner = element.closest('.carnet-scale-inner') as HTMLElement | null;
-    const originalTransform = scaleInner?.style.transform ?? '';
-
-    if (scaleInner) {
-      scaleInner.style.transform = 'none';
-    }
-
-    await this.exportService.yieldToUi();
-
-    try {
-      return await this.exportService.captureElement(element);
-    } finally {
-      if (scaleInner) {
-        scaleInner.style.transform = originalTransform;
-      }
-    }
-  }
-
   private async mostrarToast(
     message: string,
-    color: 'success' | 'danger' | 'warning'
+    color: 'success' | 'danger' | 'warning',
+    duration = color === 'success' ? 2000 : 3000
   ): Promise<void> {
     const toast = await this.toastCtrl.create({
       message,
-      duration: color === 'success' ? 2000 : 3000,
+      duration,
       color,
     });
     await toast.present();

@@ -1,52 +1,132 @@
-<div #carnetRoot class="carnet" [class.carnet--flat]="flat">
-  <div class="carnet-bg">
-    <div class="bg-stripe bg-stripe--tr"></div>
-    <div class="bg-stripe bg-stripe--bl"></div>
-    <div class="bg-stripe bg-stripe--mid"></div>
-    @if (carnetData.logoDataUrl) {
-      <img
-        [src]="carnetData.logoDataUrl"
-        alt=""
-        class="carnet-bg-logo"
-        aria-hidden="true"
-      />
+<div
+  class="carnet"
+  [class.carnet--flat]="flat"
+  [style.width.px]="canvasWidth"
+  [style.height.px]="canvasHeight"
+>
+  <div
+    class="carnet-stripe"
+    [style.background]="stripeGradient"
+    [style.height.px]="stripeHeightPx"
+  >
+    @if (nombreAcademiaText) {
+      <span class="carnet-stripe-text" [ngStyle]="stripeTextStyle">
+        {{ nombreAcademiaText }}
+      </span>
     }
   </div>
 
-  <div class="carnet-body">
-    <div class="carnet-foto-wrapper">
-      <div class="carnet-foto-ring">
-        <div class="carnet-foto">
-          @if (carnetData.fotoDataUrl) {
-            <img
-              [src]="carnetData.fotoDataUrl"
-              [alt]="'Foto de ' + carnetData.nombreCompleto"
-              class="carnet-foto-img"
-            />
-          } @else {
-            <div class="carnet-foto-placeholder">
-              <ion-icon name="person-outline" class="carnet-foto-icon"></ion-icon>
-            </div>
-          }
+  <div
+    class="carnet-photo-frame"
+    [ngStyle]="fotoFrameStyle"
+    [style.border-color]="theme.marcoFoto"
+  >
+    <div class="carnet-photo-inner" [ngStyle]="fotoInnerStyle">
+      @if (carnetData.fotoDataUrl) {
+        <img
+          [src]="carnetData.fotoDataUrl"
+          [alt]="'Foto de ' + carnetData.nombreCompleto"
+          class="carnet-foto-img"
+        />
+      } @else {
+        <div class="carnet-foto-placeholder">
+          <ion-icon name="person-outline" class="carnet-foto-icon"></ion-icon>
         </div>
-      </div>
-    </div>
-
-    <div class="carnet-categoria">{{ carnetData.alumno.categoria }}</div>
-    <div class="carnet-nombre">{{ carnetData.nombreCompleto }}</div>
-
-    <div class="carnet-qr-wrapper">
-      <img [src]="carnetData.qrDataUrl" alt="Código QR" class="carnet-qr-img" />
-    </div>
-
-    <div class="carnet-fecha">
-      F. NACIMIENTO: {{ formatFecha(carnetData.alumno.fecha_nacimiento) }}
+      }
     </div>
   </div>
 
-  @if (carnetData.nombreAcademia) {
-    <div class="carnet-footer">
-      <span class="carnet-footer-text">{{ carnetData.nombreAcademia }}</span>
+  <ion-icon
+    name="calendar-outline"
+    class="carnet-calendar"
+    [ngStyle]="calendarStyle"
+    aria-hidden="true"
+  />
+
+  <div class="carnet-overlay">
+    <div class="carnet-labeled-field" [ngStyle]="categoriaBlockStyle">
+      <div class="carnet-field-label" [style.font-size.px]="fieldLabelFontPx">
+        CATEGORÍA:
+      </div>
+      <div
+        class="carnet-field-value"
+        [style.font-size.px]="categoriaValueFontPx"
+        [style.color]="categoriaColor"
+        [style.font-weight]="categoriaWeight"
+      >
+        {{ categoriaText }}
+      </div>
+    </div>
+
+    <div class="carnet-labeled-field" [ngStyle]="nombresBlockStyle">
+      <div class="carnet-field-label" [style.font-size.px]="fieldLabelFontPx">
+        NOMBRES:
+      </div>
+      <div
+        class="carnet-field-value"
+        [style.font-size.px]="nombresValueFontPx"
+        [style.color]="nombreColor"
+        [style.font-weight]="nombreWeight"
+      >
+        {{ nombresText }}
+      </div>
+    </div>
+
+    <div class="carnet-labeled-field" [ngStyle]="apellidosBlockStyle">
+      <div class="carnet-field-label" [style.font-size.px]="fieldLabelFontPx">
+        APELLIDOS:
+      </div>
+      <div
+        class="carnet-field-value carnet-field-value--apellidos"
+        [style.font-size.px]="apellidosValueFontPx"
+        [style.color]="nombreColor"
+        [style.font-weight]="nombreWeight"
+      >
+        @for (line of apellidosLines; track $index) {
+          <div class="carnet-apellido-line">{{ line }}</div>
+        }
+      </div>
+    </div>
+
+    <div class="carnet-qr-frame" [ngStyle]="qrFrameStyle">
+      @if (carnetData.qrDataUrl) {
+        <img
+          [src]="carnetData.qrDataUrl"
+          alt="Código QR"
+          class="carnet-qr-img"
+          [ngStyle]="qrInnerStyle"
+        />
+      } @else {
+        <div class="carnet-qr-placeholder" [ngStyle]="qrInnerStyle"></div>
+      }
+    </div>
+
+    <div class="carnet-fecha-block" [ngStyle]="fechaBlockStyle">
+      <div
+        class="carnet-fecha-label"
+        [style.font-size.px]="fechaLabelFontPx"
+        [style.color]="fechaColor"
+      >
+        F. NACIMIENTO:
+      </div>
+      <div
+        class="carnet-fecha-valor"
+        [style.font-size.px]="fechaValorFontPx"
+        [style.color]="fechaColor"
+      >
+        {{ fechaValor }}
+      </div>
+    </div>
+  </div>
+
+  @if (logoWatermarkSrc) {
+    <div class="carnet-watermark-wrap" [style.top.px]="stripeHeightPx">
+      <img
+        [src]="logoWatermarkSrc"
+        alt=""
+        class="carnet-watermark"
+        aria-hidden="true"
+      />
     </div>
   }
 </div>
