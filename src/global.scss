@@ -36,6 +36,15 @@
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
 
+// Safe area — Ionic usa --ion-safe-area-* en headers, tabs y contenido fullscreen.
+// @capacitor-community/safe-area corrige env() en Android WebView < 140.
+:root {
+  --ion-safe-area-top: env(safe-area-inset-top, 0px);
+  --ion-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --ion-safe-area-left: env(safe-area-inset-left, 0px);
+  --ion-safe-area-right: env(safe-area-inset-right, 0px);
+}
+
 // Fondo opaco en cada vista — evita ver la pantalla anterior en transiciones
 // sin forzar estilos que rompen ion-content en Android/Web.
 ion-router-outlet > .ion-page {
@@ -55,11 +64,18 @@ ion-content.has-fab {
 
 // Safe area inferior en páginas sin FAB (barra de navegación de Android)
 ion-content.has-safe-bottom {
-  --padding-bottom: calc(16px + env(safe-area-inset-bottom, 16px));
+  --padding-bottom: calc(16px + var(--ion-safe-area-bottom, 16px));
 }
 
 ion-fab[slot="fixed"] {
-  margin-bottom: calc(16px + env(safe-area-inset-bottom, 16px));
+  margin-bottom: calc(16px + var(--ion-safe-area-bottom, 16px));
+}
+
+// Páginas fullscreen sin ion-header (login, perfil público, etc.)
+.ion-page > ion-content[fullscreen='true']:only-child,
+.ion-page > ion-content[fullscreen]:only-child {
+  --padding-top: var(--ion-safe-area-top);
+  --padding-bottom: var(--ion-safe-area-bottom);
 }
 
 .loading-center {
