@@ -5,6 +5,13 @@ const config: CapacitorConfig = {
   appName: 'Gestion Deportiva',
   webDir: 'www',
   plugins: {
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
+    SafeArea: {
+      detectViewportFitCoverChanges: true,
+      initialViewportFitCover: true,
+    },
     Keyboard: {
       resize: 'none',
       style: 'dark',
